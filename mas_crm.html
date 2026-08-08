@@ -185,6 +185,8 @@
   .sidebar-actions{display:flex; flex-direction:column; gap:6px; margin-top:14px; padding-top:14px; border-top:1px solid rgba(255,255,255,0.1);}
   .sidebar-btn{background:rgba(255,255,255,0.07); color:#DDE3E8; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:8px 10px; font-size:12px; font-weight:700; text-align:left;}
   .sidebar-btn:hover{background:rgba(255,255,255,0.14);}
+  .admin-badge{font-size:11px; font-weight:800; color:#6EE7B7; padding:2px 2px 4px;}
+  .lock-btn{color:#F5A9A9; border-color:rgba(245,169,169,0.3);}
 
   .update-columns{column-count:3; column-gap:26px;}
   .update-item{break-inside:avoid; display:flex; gap:10px; padding:9px 0; border-bottom:1px solid var(--line);}
@@ -387,8 +389,11 @@ function buildSeed(){
 
 /* ===================== 상태 & 저장 (구글시트 연동) ===================== */
 const SHEETS_URL = "https://script.google.com/macros/s/AKfycbwYVvz5-xQnBomVicSTCRYm3m3ZN1mTcntltawYegS4bCd6Z0nkUdLbcGmKxBMzrJuu/exec";
+// 관리자 모드 비밀번호 - 바꾸고 싶으면 이 문자열만 수정하면 됩니다.
+const ADMIN_PASSWORD = "git2026";
+
 let STATE = { companies: [], view: "dashboard", filterLevel:"", filterStage:"", search:"", modalId:null, addingNew:false, intakeForm: freshIntakeForm(),
-  dashAssigneeQuery:"", dashCompanyQuery:"", updateWeekKey:"", updateAssignee:"" };
+  dashAssigneeQuery:"", dashCompanyQuery:"", updateWeekKey:"", updateAssignee:"", isAdmin:false };
 
 function freshIntakeForm(){
   return {
@@ -627,15 +632,56 @@ function renderSidebar(){
     if(e.target.files && e.target.files[0]) importBackup(e.target.files[0]);
     e.target.value = "";
   }});
-  const actions = el("div",{class:"sidebar-actions"},
-    el("button",{class:"sidebar-btn", onclick:()=>window.open("https://docs.google.com/spreadsheets/d/1haGYcFshc5kEXYX0NdWYH288puvQqfWKMc8yc9tXlgQ/edit#gid=245678759","_blank")}, "↗ 구글시트 바로가기"),
-    el("button",{class:"sidebar-btn", onclick:exportReport}, "⬇ 전체 보고서 다운로드 (CSV)"),
-    el("button",{class:"sidebar-btn", onclick:exportBackup}, "⬇ 데이터 백업 (JSON)"),
-    el("button",{class:"sidebar-btn", onclick:()=>fileInput.click()}, "⬆ 백업 파일로 복원"),
-    fileInput
-  );
+
+  const actions = el("div",{class:"sidebar-actions"});
+  if(STATE.isAdmin){
+    actions.appendChild(el("div",{class:"admin-badge"}, "🔓 관리자 모드"));
+    actions.appendChild(el("button",{class:"sidebar-btn", onclick:exportReport}, "⬇ 전체 보고서 다운로드 (CSV)"));
+    actions.appendChild(el("button",{class:"sidebar-btn", onclick:exportBackup}, "⬇ 데이터 백업 (JSON)"));
+    actions.appendChild(el("button",{class:"sidebar-btn", onclick:()=>fileInput.click()}, "⬆ 백업 파일로 복원"));
+    actions.appendChild(fileInput);
+    actions.appendChild(el("button",{class:"sidebar-btn lock-btn", onclick:()=>{ STATE.isAdmin=false; render(); showToast("관리자 모드를 종료했어요"); }}, "🔒 관리자 모드 종료"));
+  } else {
+    actions.appendChild(el("button",{class:"sidebar-btn", onclick:openAdminLogin}, "🔒 관리자 모드 잠금해제"));
+  }
   sb.appendChild(actions);
   return sb;
+}
+
+function openAdminLogin(){
+  const overlay = el("div",{class:"overlay", onclick:(e)=>{ if(e.target===overlay) document.body.removeChild(overlay); }});
+  const modal = el("div",{class:"modal", style:"width:320px;"});
+  modal.appendChild(el("div",{class:"modal-head"}, el("h2",null,"관리자 모드"), el("button",{class:"close-x", onclick:()=>document.body.removeChild(overlay)}, "✕")));
+
+  const body = el("div",{class:"modal-body"});
+  const pwInput = el("input",{type:"password", placeholder:"관리자 비밀번호", style:"width:100%;"});
+  const errMsg = el("div",{style:"color:var(--c-color);font-size:12px;margin-top:8px;"}, "");
+  body.appendChild(el("div",{class:"field"}, el("label",null,"데이터 다운로드/백업 기능은 관리자만 사용할 수 있어요"), pwInput));
+  body.appendChild(errMsg);
+  modal.appendChild(body);
+
+  function trySubmit(){
+    if(pwInput.value === ADMIN_PASSWORD){
+      STATE.isAdmin = true;
+      document.body.removeChild(overlay);
+      render();
+      showToast("관리자 모드가 활성화됐어요");
+    } else {
+      errMsg.textContent = "비밀번호가 올바르지 않아요";
+      pwInput.value = "";
+      pwInput.focus();
+    }
+  }
+  pwInput.addEventListener("keydown", (e)=>{ if(e.key==="Enter") trySubmit(); });
+
+  const foot = el("div",{class:"modal-foot"}, el("span"),
+    el("button",{class:"btn-primary", onclick:trySubmit}, "확인")
+  );
+  modal.appendChild(foot);
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+  setTimeout(()=>pwInput.focus(), 60);
 }
 
 function stageProgress(c){
