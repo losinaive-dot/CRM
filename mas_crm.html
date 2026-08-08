@@ -209,6 +209,13 @@
   .card-preview-box{display:flex; align-items:flex-start; gap:14px; flex-wrap:wrap;}
   .card-img{max-width:230px; max-height:140px; border-radius:8px; border:1px solid var(--line); display:block; object-fit:cover;}
   .card-empty{font-size:12.5px; color:var(--ink-soft); border:1px dashed var(--line); border-radius:8px; padding:16px 20px; text-align:center; width:230px;}
+  .attach-list{display:flex; flex-direction:column;}
+  .attach-item{display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--line);}
+  .attach-item:last-child{border-bottom:none;}
+  .attach-link{flex:1; font-size:13px; color:var(--teal); text-decoration:none; font-weight:600; word-break:break-all;}
+  .attach-link:hover{text-decoration:underline;}
+  .attach-date{font-size:11.5px; color:var(--ink-soft); white-space:nowrap;}
+  .attach-status{font-size:12px; color:var(--teal); font-weight:700; margin-top:6px; min-height:14px;}
   .checklist-item{display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--line);}
   .checklist-item:last-child{border-bottom:none;}
   .checklist-item .ci-text{flex:1; font-size:13px;}
@@ -332,7 +339,7 @@ function mk(category, name, level, stage, dropped, dropNote){
     category, name, level: level||"B", stage: stage||"consult",
     dropped: !!dropped, dropNote: dropNote||"",
     assignee:"", address:"", ceoName:"", ceoPhone:"", managerName:"", managerPhone:"", managerEmail:"",
-    businessCard:"", checklist:[], intake:null,
+    businessCard:"", checklist:[], intake:null, attachments:[],
     history: dropped ? [{date: today(), text:"DROP 처리됨"+(dropNote?(" - "+dropNote):"")}] : [],
   };
 }
@@ -422,7 +429,7 @@ async function loadData(){
     const res = await fetch(SHEETS_URL, { method: "GET" });
     const data = await res.json();
     if(data && data.ok && Array.isArray(data.companies) && data.companies.length > 0){
-      STATE.companies = data.companies.map(c=>Object.assign({businessCard:"", checklist:[], managerEmail:"", intake:null}, c));
+      STATE.companies = data.companies.map(c=>Object.assign({businessCard:"", checklist:[], managerEmail:"", intake:null, attachments:[]}, c));
     } else {
       // 시트가 비어있으면 초기 데이터로 채워서 그대로 시트에 저장해둔다.
       STATE.companies = buildSeed();
@@ -1413,6 +1420,12 @@ function renderModal(){
   body.appendChild(el("div",{class:"section-title"},"명함"));
   body.appendChild(businessCardField(company, autoSave));
 
+  // 첨부파일 (상담자료/기타 서류) - 기존 업체에만 제공 (신규는 저장 후 첨부 가능)
+  if(!isNew){
+    body.appendChild(el("div",{class:"section-title"},"첨부파일 (상담자료/서류)"));
+    body.appendChild(attachmentsField(company, autoSave));
+  }
+
   // 상담 원본 데이터 / 상담보고서
   if(!isNew && company.intake){
     body.appendChild(el("div",{class:"section-title"},"최초 상담 기록"));
@@ -1567,6 +1580,99 @@ function compressImageToDataUrl(file, cb){
     img.src = ev.target.result;
   };
   reader.readAsDataURL(file);
+}
+
+// 파일을 순수 base64 문자열로 변환 (Drive 업로드용, data: 접두어 제거)
+function fileToBase64(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      const result = reader.result;
+      const idx = result.indexOf(",");
+      resolve(idx>=0 ? result.slice(idx+1) : result);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+const ATTACH_ICON = {
+  "application/pdf":"📕", "image/":"🖼️",
+  "application/msword":"📄", "application/vnd.openxmlformats-officedocument.wordprocessingml.document":"📄",
+  "application/vnd.ms-excel":"📊", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":"📊"
+};
+function attachIconFor(mimeType){
+  if(!mimeType) return "📎";
+  if(mimeType.startsWith("image/")) return "🖼️";
+  return ATTACH_ICON[mimeType] || "📎";
+}
+
+// 업체 상세 - 첨부파일(상담자료/서류) 업로드 UI. 구글 드라이브에 저장되고 시트에는 링크만 남는다.
+function attachmentsField(company, autoSave){
+  const wrap = el("div");
+  const list = el("div",{class:"attach-list"});
+  const statusMsg = el("div",{class:"attach-status"});
+
+  function renderList(){
+    list.innerHTML = "";
+    const atts = company.attachments || [];
+    if(!atts.length){
+      list.appendChild(el("div",{style:"color:var(--ink-soft);font-size:12.5px;padding:6px 0;"}, "첨부된 자료가 없어요."));
+      return;
+    }
+    atts.forEach((a, idx)=>{
+      list.appendChild(el("div",{class:"attach-item"},
+        el("a",{class:"attach-link", href:a.url, target:"_blank", rel:"noopener"}, attachIconFor(a.mimeType)+" "+a.name),
+        el("span",{class:"attach-date"}, a.addedDate||""),
+        el("button",{class:"history-del", onclick:()=>{
+          atts.splice(idx,1);
+          renderList();
+          autoSave();
+        }}, "삭제")
+      ));
+    });
+  }
+  renderList();
+
+  const fileInput = el("input",{type:"file", multiple:"multiple", accept:"image/*,application/pdf,.doc,.docx,.xls,.xlsx,.hwp"});
+  fileInput.addEventListener("change", async (e)=>{
+    const files = Array.from(e.target.files || []);
+    fileInput.value = "";
+    for(const file of files){
+      if(file.size > 10*1024*1024){
+        showToast("["+file.name+"] 파일이 너무 커요 (10MB 이하만 업로드 가능)");
+        continue;
+      }
+      statusMsg.textContent = "["+file.name+"] 업로드 중...";
+      try{
+        const base64 = await fileToBase64(file);
+        const res = await fetch(SHEETS_URL, {
+          method:"POST",
+          headers:{"Content-Type":"text/plain;charset=utf-8"},
+          body: JSON.stringify({ type:"upload", fileName:file.name, mimeType:file.type, dataBase64:base64, companyId:company.id })
+        });
+        const data = await res.json();
+        if(data && data.ok){
+          if(!company.attachments) company.attachments = [];
+          company.attachments.push({ id:data.id, name:data.name, url:data.url, mimeType:file.type, addedDate:today() });
+          renderList();
+          autoSave();
+        } else {
+          showToast("["+file.name+"] 업로드 실패: "+((data&&data.error)||"알 수 없는 오류"));
+        }
+      }catch(err){
+        console.error("첨부파일 업로드 실패", err);
+        showToast("["+file.name+"] 업로드 중 오류가 발생했어요");
+      }
+    }
+    statusMsg.textContent = "";
+  });
+
+  wrap.appendChild(list);
+  wrap.appendChild(el("div",{style:"margin-top:8px;"}, fileInput));
+  wrap.appendChild(statusMsg);
+  wrap.appendChild(el("div",{style:"font-size:11px;color:var(--ink-soft);margin-top:6px;"}, "이미지·PDF·워드·엑셀·한글 파일 지원 (파일당 10MB 이하). 구글 드라이브의 'MAS_첨부파일' 폴더에 저장돼요."));
+  return wrap;
 }
 
 function renderChecklist(container, company, autoSave){
