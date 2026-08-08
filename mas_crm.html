@@ -1,0 +1,1608 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MAS 영업 파이프라인 관리</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230F766E'/%3E%3Cpath d='M14 20h36l-13 16v12l-10 5V36z' fill='white'/%3E%3C/svg%3E">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="theme-color" content="#0F766E">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="MAS영업">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+  @import url('https://cdnjs.cloudflare.com/ajax/libs/pretendard/1.3.9/static/pretendard.min.css');
+
+  :root{
+    --paper:#F4F5F3;
+    --panel:#FFFFFF;
+    --ink:#1B2430;
+    --ink-soft:#4B5563;
+    --line:#E1E4E1;
+    --steel:#5B6B7A;
+    --teal:#0F766E;
+    --teal-soft:#E7F3F1;
+    --a-color:#2563EB; --a-bg:#EAF1FE;
+    --b-color:#B45309; --b-bg:#FDF1E1;
+    --c-color:#DC2626; --c-bg:#FDEAEA;
+    --drop:#8A8F98; --drop-bg:#EEEFF0;
+    --radius:10px;
+    --shadow: 0 1px 2px rgba(27,36,48,0.04), 0 4px 14px rgba(27,36,48,0.06);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    font-family:'Pretendard', -apple-system, 'Malgun Gothic', system-ui, sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    font-size:14px;
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{display:flex; min-height:100vh;}
+
+  /* Sidebar */
+  #sidebar{
+    width:196px; flex-shrink:0;
+    background:var(--ink); color:#DDE3E8;
+    display:flex; flex-direction:column;
+    padding:20px 12px;
+    position:sticky; top:0; height:100vh;
+  }
+  #sidebar .brand{
+    font-weight:800; font-size:15px; color:#fff;
+    letter-spacing:-0.02em; padding:0 8px 18px 8px;
+    display:flex; align-items:center; gap:8px;
+  }
+  #sidebar .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--teal); box-shadow:0 0 0 3px rgba(15,118,110,0.35);}
+  .nav-item{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    padding:9px 10px; border-radius:8px; margin-bottom:2px; cursor:pointer;
+    color:#B7C0C9; font-weight:600; font-size:13.2px;
+    transition:background .12s ease, color .12s ease;
+  }
+  .nav-item:hover{background:rgba(255,255,255,0.06); color:#fff;}
+  .nav-item.active{background:var(--teal); color:#fff;}
+  .nav-item .badge{
+    font-size:11px; font-weight:700; padding:1px 7px; border-radius:20px;
+    background:rgba(255,255,255,0.14); color:#fff;
+  }
+  .nav-item.active .badge{background:rgba(255,255,255,0.28);}
+  .nav-section-label{
+    font-size:10.5px; text-transform:uppercase; letter-spacing:.08em;
+    color:#6B7684; font-weight:700; padding:14px 10px 6px;
+  }
+  .spec-nav{display:flex; flex-direction:column; margin:2px 0 4px 6px; padding-left:8px; border-left:2px solid rgba(255,255,255,0.1);}
+  .spec-nav-item{padding:6px 10px; margin-bottom:1px; border-radius:7px; font-size:12px; font-weight:600; color:#9AA6B0; cursor:pointer;}
+  .spec-nav-item:hover{background:rgba(255,255,255,0.06); color:#fff;}
+  #sidebar .foot{margin-top:auto; padding:10px 8px 0; font-size:11px; color:#6B7684; line-height:1.5;}
+
+  /* Main */
+  #main{flex:1; min-width:0; padding:26px 30px 60px;}
+  .topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; gap:16px; flex-wrap:wrap;}
+  .topbar h1{font-size:20px; margin:0; font-weight:800; letter-spacing:-0.02em;}
+  .topbar .sub{color:var(--ink-soft); font-size:12.5px; margin-top:3px; font-weight:500;}
+  .toolbar{display:flex; gap:8px; align-items:center; flex-wrap:wrap;}
+
+  input[type=text], input[type=search], select, input[type=date], textarea{
+    font-family:inherit; font-size:13px; border:1px solid var(--line); border-radius:8px;
+    padding:8px 10px; background:#fff; color:var(--ink); outline:none;
+  }
+  input[type=text]:focus, select:focus, textarea:focus, input[type=date]:focus{border-color:var(--teal); box-shadow:0 0 0 3px var(--teal-soft);}
+  textarea{resize:vertical; width:100%; font-size:13px; line-height:1.5;}
+
+  button{font-family:inherit; cursor:pointer; border:none; border-radius:8px; font-weight:700; font-size:13px; padding:8px 14px; transition:transform .08s ease, opacity .12s ease;}
+  button:active{transform:scale(0.97);}
+  .btn-primary{background:var(--teal); color:#fff;}
+  .btn-primary:hover{opacity:.92;}
+  .btn-ghost{background:#fff; color:var(--ink); border:1px solid var(--line);}
+  .btn-ghost:hover{background:#F6F7F6;}
+  .btn-danger{background:var(--c-bg); color:var(--c-color);}
+  .btn-sm{padding:5px 10px; font-size:12px; border-radius:6px;}
+
+  /* Dashboard */
+  .grid-cards{display:grid; grid-template-columns:repeat(auto-fill, minmax(210px,1fr)); gap:12px; margin-bottom:22px;}
+  .stat-card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:16px 18px; box-shadow:var(--shadow); cursor:pointer;}
+  .stat-card:hover{border-color:var(--teal);}
+  .stat-card .label{font-size:12px; color:var(--ink-soft); font-weight:700;}
+  .stat-card .num{font-size:26px; font-weight:800; margin-top:4px; letter-spacing:-0.02em;}
+  .stat-card .breakdown{display:flex; gap:6px; margin-top:10px; font-size:11px; font-weight:700;}
+  .pill{padding:2px 7px; border-radius:20px;}
+  .pill.A{background:var(--a-bg); color:var(--a-color);}
+  .pill.B{background:var(--b-bg); color:var(--b-color);}
+  .pill.C{background:var(--c-bg); color:var(--c-color);}
+
+  table.pipeline-table{width:100%; margin-top:8px; border-collapse:separate; border-spacing:0; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow);}
+  table.pipeline-table th{background:#F8F9F8; text-align:left; font-size:11.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em; padding:10px 12px; border-bottom:1px solid var(--line); font-weight:700;}
+  table.pipeline-table td{padding:10px 12px; border-bottom:1px solid var(--line); vertical-align:middle; font-size:13px;}
+  table.pipeline-table tr:last-child td{border-bottom:none;}
+  table.pipeline-table tbody tr{cursor:pointer;}
+  table.pipeline-table tbody tr:hover{background:#FAFBFA;}
+
+  .level-tag{display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:20px; font-weight:800; font-size:11.5px;}
+  .level-tag.A{background:var(--a-bg); color:var(--a-color);}
+  .level-tag.B{background:var(--b-bg); color:var(--b-color);}
+  .level-tag.C{background:var(--c-bg); color:var(--c-color);}
+  .level-tag.DROP{background:var(--drop-bg); color:var(--drop);}
+
+  .stage-track{display:flex; align-items:center; gap:3px;}
+  .stage-dot{width:9px; height:9px; border-radius:50%; background:var(--line); flex-shrink:0;}
+  .stage-dot.done{background:var(--teal);}
+  .stage-dot.current{background:var(--teal); box-shadow:0 0 0 3px var(--teal-soft);}
+  .stage-line{width:12px; height:2px; background:var(--line); flex-shrink:0;}
+  .stage-line.done{background:var(--teal);}
+  .stage-label-current{font-size:11.5px; font-weight:700; color:var(--teal); margin-left:6px; white-space:nowrap;}
+  .dropped-label{font-size:11.5px; font-weight:700; color:var(--drop);}
+
+  .company-name-cell{font-weight:700;}
+  .company-name-cell .cat-tag{display:block; font-size:11px; font-weight:600; color:var(--ink-soft); margin-top:1px;}
+  .assignee-chip{font-size:11.5px; font-weight:700; background:#F0F1EF; color:var(--ink-soft); padding:2px 8px; border-radius:20px;}
+  .assignee-chip.empty{color:#B5BBC2; border:1px dashed var(--line); background:transparent;}
+
+  .empty-state{padding:60px 20px; text-align:center; color:var(--ink-soft); background:var(--panel); border:1px dashed var(--line); border-radius:var(--radius);}
+  .empty-state b{color:var(--ink);}
+
+  /* Modal */
+  .overlay{position:fixed; inset:0; background:rgba(20,26,32,0.45); display:flex; align-items:flex-start; justify-content:center; padding:36px 20px; z-index:50; overflow-y:auto;}
+  .modal{background:var(--panel); width:640px; max-width:100%; border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,0.25); padding:0; overflow:hidden;}
+  .modal-head{padding:18px 22px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between;}
+  .modal-head h2{margin:0; font-size:16.5px; font-weight:800;}
+  .modal-body{padding:20px 22px; max-height:70vh; overflow-y:auto;}
+  .modal-foot{padding:14px 22px; border-top:1px solid var(--line); display:flex; justify-content:space-between; gap:8px;}
+  .close-x{background:transparent; color:var(--ink-soft); font-size:18px; padding:2px 6px;}
+  .form-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .form-grid .full{grid-column:1/3;}
+  .field label{display:block; font-size:12px; font-weight:700; color:var(--ink-soft); margin-bottom:5px;}
+  .field input, .field select, .field textarea{width:100%;}
+  .section-title{font-size:12.5px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:var(--steel); margin:18px 0 8px; display:flex; align-items:center; gap:8px;}
+  .section-title:first-child{margin-top:0;}
+  .section-title::after{content:""; flex:1; height:1px; background:var(--line);}
+
+  .stage-picker{display:flex; flex-wrap:wrap; gap:6px;}
+  .stage-btn{padding:7px 11px; border-radius:8px; border:1px solid var(--line); background:#fff; font-size:12.5px; font-weight:700; color:var(--ink-soft);}
+  .stage-btn.active{background:var(--teal); border-color:var(--teal); color:#fff;}
+  .level-picker{display:flex; gap:6px;}
+  .level-btn{flex:1; padding:8px; border-radius:8px; border:1px solid var(--line); background:#fff; font-weight:800; font-size:13px;}
+  .level-btn.A.active{background:var(--a-color); border-color:var(--a-color); color:#fff;}
+  .level-btn.B.active{background:var(--b-color); border-color:var(--b-color); color:#fff;}
+  .level-btn.C.active{background:var(--c-color); border-color:var(--c-color); color:#fff;}
+  .drop-toggle{display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; color:var(--ink-soft); margin-top:10px;}
+
+  .history-list{display:flex; flex-direction:column; gap:0; margin-top:6px;}
+  .history-item{display:flex; gap:12px; padding:10px 0; border-bottom:1px solid var(--line);}
+  .history-item:last-child{border-bottom:none;}
+  .history-date{font-size:11.5px; font-weight:800; color:var(--teal); white-space:nowrap; padding-top:1px; width:78px; flex-shrink:0;}
+  .history-text{font-size:13px; color:var(--ink); line-height:1.5; flex:1;}
+  .history-del{background:none; color:#C4C9CE; font-size:11px; padding:2px 4px; flex-shrink:0;}
+  .history-add{display:flex; gap:8px; margin-top:10px;}
+  .history-add input[type=date]{width:130px; flex-shrink:0;}
+  .history-add input[type=text]{flex:1;}
+
+  .contact-row{display:flex; gap:16px; font-size:13px; color:var(--ink-soft); flex-wrap:wrap;}
+  .contact-row b{color:var(--ink);}
+
+  .sidebar-actions{display:flex; flex-direction:column; gap:6px; margin-top:14px; padding-top:14px; border-top:1px solid rgba(255,255,255,0.1);}
+  .sidebar-btn{background:rgba(255,255,255,0.07); color:#DDE3E8; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:8px 10px; font-size:12px; font-weight:700; text-align:left;}
+  .sidebar-btn:hover{background:rgba(255,255,255,0.14);}
+
+  .update-columns{column-count:3; column-gap:26px;}
+  .update-item{break-inside:avoid; display:flex; gap:10px; padding:9px 0; border-bottom:1px solid var(--line);}
+  .update-date{font-size:11.5px; font-weight:800; color:var(--teal); white-space:nowrap; width:74px; flex-shrink:0; padding-top:1px;}
+  .update-company{font-size:12px; font-weight:700; color:var(--ink-soft); display:block; margin-bottom:2px;}
+  .update-body{font-size:13px; line-height:1.5; color:var(--ink);}
+  .week-group{margin-bottom:6px;}
+  .week-header{font-size:12px; font-weight:800; color:#fff; background:var(--steel); display:inline-block; padding:3px 11px; border-radius:20px; margin:14px 0 8px;}
+
+  .search-sec{margin-bottom:22px; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px 18px;}
+  .search-row{display:flex; gap:16px; flex-wrap:wrap;}
+  .search-field{flex:1; min-width:220px;}
+  .search-field label{display:block; font-size:12px; font-weight:700; color:var(--ink-soft); margin-bottom:5px;}
+  .search-field input{width:100%;}
+  .hist-head{display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;}
+  .hist-head select{font-size:12.5px; padding:6px 8px;}
+  @media (max-width:980px){ .update-columns{column-count:2;} }
+  @media (max-width:600px){ .update-columns{column-count:1;} }
+
+  .card-preview-box{display:flex; align-items:flex-start; gap:14px; flex-wrap:wrap;}
+  .card-img{max-width:230px; max-height:140px; border-radius:8px; border:1px solid var(--line); display:block; object-fit:cover;}
+  .card-empty{font-size:12.5px; color:var(--ink-soft); border:1px dashed var(--line); border-radius:8px; padding:16px 20px; text-align:center; width:230px;}
+  .checklist-item{display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--line);}
+  .checklist-item:last-child{border-bottom:none;}
+  .checklist-item .ci-text{flex:1; font-size:13px;}
+  .checklist-item .ci-text.done{text-decoration:line-through; color:var(--ink-soft);}
+  .checklist-add{display:flex; gap:8px; margin-top:10px;}
+  .checklist-add input{flex:1;}
+
+  /* 상담 체크리스트 폼 */
+  .intake-card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:20px 22px; max-width:760px;}
+  .intake-sec{margin-top:22px; padding-top:16px; border-top:1px solid var(--line);}
+  .intake-sec:first-child{margin-top:0; padding-top:0; border-top:none;}
+  .intake-sec-title{font-size:13.5px; font-weight:800; color:var(--ink); margin-bottom:10px; display:flex; align-items:center; gap:6px;}
+  .intake-sec-title .mark{color:var(--teal);}
+  .intake-sub{font-size:12.5px; font-weight:700; color:var(--steel); margin:12px 0 6px;}
+  .chk-row{display:flex; flex-wrap:wrap; gap:8px 18px; margin-bottom:4px;}
+  .chk-item{display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink); cursor:pointer;}
+  .chk-item input{width:16px;height:16px;accent-color:var(--teal);}
+  .qty-row{display:flex; flex-wrap:wrap; gap:14px; margin:6px 0 2px;}
+  .qty-item{display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--ink-soft);}
+  .qty-item input{width:64px;}
+  .intake-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .intake-grid .full{grid-column:1/3;}
+  .radio-row{display:flex; gap:14px;}
+  .radio-item{display:flex; align-items:center; gap:5px; font-size:13px;}
+  .contact-box{border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin-top:8px; background:#FAFBFA;}
+  .prep-doc-note{font-size:12.5px; font-weight:700; color:var(--b-color); background:var(--b-bg); border:1px solid #F3D9B5; border-radius:8px; padding:9px 12px; margin-bottom:4px;}
+  .intake-actions{display:flex; gap:10px; margin-top:22px; flex-wrap:wrap;}
+  @media (max-width:760px){
+    .intake-grid{grid-template-columns:1fr;}
+    .intake-grid .full{grid-column:1/2;}
+  }
+
+  ::-webkit-scrollbar{width:9px; height:9px;}
+  ::-webkit-scrollbar-thumb{background:#D3D7D3; border-radius:20px;}
+  .toast{position:fixed; bottom:22px; left:50%; transform:translateX(-50%); background:var(--ink); color:#fff; padding:10px 18px; border-radius:20px; font-size:12.5px; font-weight:700; z-index:100; box-shadow:0 8px 24px rgba(0,0,0,0.25); opacity:0; pointer-events:none; transition:opacity .2s ease;}
+  .toast.show{opacity:1;}
+
+  .save-status{position:fixed; top:14px; right:18px; z-index:80; font-size:11.5px; font-weight:700; padding:6px 12px; border-radius:20px; background:#fff; border:1px solid var(--line); color:var(--ink-soft); box-shadow:var(--shadow); display:flex; align-items:center; gap:6px; opacity:0; transition:opacity .25s ease;}
+  .save-status.visible{opacity:1;}
+  .save-status .sdot{width:7px;height:7px;border-radius:50%; background:#B5BBC2;}
+  .save-status.saving .sdot{background:#D97706; animation:pulse 1s infinite;}
+  .save-status.ok .sdot{background:#0F766E;}
+  .save-status.error{color:var(--c-color); border-color:#F3C9C9; background:var(--c-bg);}
+  .save-status.error .sdot{background:var(--c-color);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+  /* ===== 모바일 반응형 (삼성 갤럭시 등 스마트폰 화면 자동 대응) ===== */
+  @media (max-width:760px){
+    body{font-size:13.5px;}
+    #app{flex-direction:column;}
+    #sidebar{
+      width:100%; height:auto; position:relative; top:0;
+      flex-direction:row; flex-wrap:wrap; align-items:center;
+      padding:10px 12px; gap:0;
+    }
+    #sidebar .brand{padding:0 8px 6px 0; font-size:13.5px; width:100%;}
+    #sidebar .brand .dot{width:7px;height:7px;}
+    .nav-section-label{display:none;}
+    .nav-item{padding:6px 10px; margin:2px; font-size:12px; white-space:nowrap;}
+    .sidebar-actions{flex-direction:row; flex-wrap:wrap; width:100%; margin-top:8px; padding-top:8px; gap:6px;}
+    .sidebar-actions .sidebar-btn{flex:1 1 auto; text-align:center; font-size:11px; padding:7px 8px;}
+    #sidebar .foot{width:100%; order:99; margin-top:6px; padding-top:6px;}
+
+    #main{padding:14px 12px 40px;}
+    .topbar{gap:10px;}
+    .topbar h1{font-size:17px;}
+    .toolbar{width:100%;}
+    .toolbar input[type=text], .toolbar select{flex:1; min-width:110px;}
+
+    .grid-cards{grid-template-columns:repeat(2, 1fr); gap:8px;}
+    .stat-card{padding:12px 12px;}
+    .stat-card .num{font-size:21px;}
+
+    table.pipeline-table{display:block; overflow-x:auto; -webkit-overflow-scrolling:touch;}
+    table.pipeline-table th, table.pipeline-table td{white-space:nowrap;}
+
+    .update-columns{column-count:1;}
+
+    .overlay{padding:0; align-items:stretch;}
+    .modal{width:100%; max-width:100%; border-radius:0; min-height:100vh;}
+    .modal-body{max-height:none;}
+    .form-grid, .intake-grid{grid-template-columns:1fr;}
+    .form-grid .full, .intake-grid .full{grid-column:1/2;}
+
+    .intake-card{padding:16px 14px; max-width:100%;}
+    .qty-row{gap:8px 14px;}
+    .save-status{top:auto; bottom:14px; right:14px; font-size:11px;}
+    .search-row{gap:10px;}
+    .search-field{min-width:100%;}
+    .hist-head{flex-direction:column; align-items:stretch;}
+    .hist-head select{width:100%;}
+  }
+  @media (max-width:400px){
+    .grid-cards{grid-template-columns:1fr 1fr;}
+    .stat-card .breakdown{flex-wrap:wrap;}
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===================== 상수 ===================== */
+const CATEGORIES = ["주차","영상","출입","비상벨","GS인증","공통"];
+const STAGES = [
+  {id:"consult", label:"상담중"},
+  {id:"spec",    label:"규격작업진행중"},
+  {id:"cert",    label:"인증진행중(KC,MAS,BF)"},
+  {id:"direct",  label:"직생진행중"},
+  {id:"catalog", label:"목록화진행중"},
+  {id:"price",   label:"가격협상/등록"},
+];
+const LEVELS = ["A","B","C"];
+const STAGE_INDEX = Object.fromEntries(STAGES.map((s,i)=>[s.id,i]));
+
+/* ===================== 시드 데이터 ===================== */
+function mk(category, name, level, stage, dropped, dropNote){
+  return {
+    id: Math.random().toString(36).slice(2,10),
+    category, name, level: level||"B", stage: stage||"consult",
+    dropped: !!dropped, dropNote: dropNote||"",
+    assignee:"", address:"", ceoName:"", ceoPhone:"", managerName:"", managerPhone:"", managerEmail:"",
+    businessCard:"", checklist:[], intake:null,
+    history: dropped ? [{date: today(), text:"DROP 처리됨"+(dropNote?(" - "+dropNote):"")}] : [],
+  };
+}
+function today(){ return new Date().toISOString().slice(0,10); }
+
+function buildSeed(){
+  const list = [];
+  const add = (cat, names, level, stage, dropped) => {
+    (names||[]).forEach(n=>{ if(n && n.trim()) list.push(mk(cat, n.trim(), level, stage, dropped)); });
+  };
+
+  // 주차
+  add("주차", ["제이엑스미디어","서경정보통신","대림테크","에스피정보기술","일신엔아이에스","태원시스템","뉴아이텍(임주경)","지엠케이정보통신","라인인포","성우음향정보","태화정보통신","에프에스네트웍스","원테크시스템","경원ICT","우리정보기술","이브이파트너스","정우시스템","이디에스","태경정보통신"], "B","consult");
+  add("주차", ["케이디에스","우리텍","마이즈"], "A","consult");
+  add("주차", ["성공시스템","웅진보안시스템","디씨앤아이","세일"], "B","cert");
+  add("주차", ["대정솔루션"], "B","direct");
+
+  // 영상
+  add("영상", ["이레산업","에이치앤에스이엔씨","서진멀티미디어통신","동남전기통신","동진파워텍","지오라인","파란시스템","태화정보통신","마루이엔씨","씨티","삼보컴퓨터 대구센터","경원ICT","인터컴","영원인력개발(컨설팅만요청)"], "B","consult");
+  add("영상", ["보문IT통신","시스메이트"], "A","consult");
+  add("영상", ["성현시스템"], "B","spec");
+  add("영상", ["삼성테크"], "B","cert");
+  add("영상", ["동양아이텍(갱신)"], "B","direct");
+  add("영상", ["동양아이텍","용두애브컴","아이캠","정우특수에이브이","동호이엔씨"], "B","price");
+
+  // 출입
+  add("출입", ["이레산업","서진멀티미디어통신","유수","동남전기통신","동진파워텍","지엠케이정보통신","서전일렉스","라인인포","에프에스네트웍스"], "B","consult");
+  add("출입", ["우리텍"], "A","consult");
+  add("출입", ["마이즈","선운전기통신"], "B","spec");
+  add("출입", ["다인아이티"], "B","catalog");
+  add("출입", ["피룰앤미래정보기술"], "B","price");
+
+  // 비상벨
+  add("비상벨", ["대정솔루션","진명이앤씨","명광","현명","에프에스네트웍스","조인테크","대경아이티","씨티","경원ICT","시스메이트","이노랩","디케이앤트","가가정보"], "B","consult");
+  add("비상벨", ["우리텍"], "A","consult");
+  add("비상벨", ["티제이원","두원전자통신"], "B","consult", true);
+  add("비상벨", ["성현시스템"], "B","spec");
+  add("비상벨", ["오티에스","세일케이디에스","디지탈라인"], "B","direct");
+  add("비상벨", ["홍석"], "B","price");
+
+  // GS인증
+  add("GS인증", ["뉴아이텍","나우터닝솔루션즈","파란시스템","크리에이티브넷","두원inc","태산","라인인포정보기술","케이시스","우리정보기술","이브이파트너스","정우시스템","이디에스","태경정보통신","제이엑스미디어","가가정보"], "B","consult");
+  add("GS인증", ["탑아이티"], "A","consult");
+  add("GS인증", ["이엔씨파워","다원","신화유디텍","중부보안","금성에이브이","경인씨앤에스","위쥬테크","아이원코리아","대신네트웍스","나우시스템","준성","태영정보"], "B","consult", true);
+  add("GS인증", ["와이케이솔루션(잠시홀딩중)"], "B","cert");
+  add("GS인증", ["디씨앤아이"], "B","catalog");
+  add("GS인증", ["용두애브컴","웅진보안시스템","다인아이티","선운전기통신","테라시스","케이디에스","스마트정보기술","아이에스테크놀로지"], "B","price");
+
+  // 공통 (4개 공종 전체 안내자료만 발송 - C Level)
+  add("공통", ["나스콤","링크정보통신","보배에이에스씨","에스아이티코리아","부경ICT","서경IT","라인인포","남해건설","로제에이아이코리아","올인원코리아","토비텍","혜움이엔씨","휴먼앤드","고흥컴퓨터랜드","영현정보통신","감탄파트너스","이엘피케이뉴","도담","바이콤","아이에이치솔루션","넷","인더스비전","도안파비스","피엠피테크","서경산업","해오름장애인협회","제이한테크","나라이엔씨","디오건설","일성미디어통신","영현인력개발","태화정보통신","뉴아이텍(전호섭)","스카이제이","차세대정보통신","한맥시스템","CCTV네오텍","티제이원","투와이솔루션","부원정보","두로산전","제이에스솔루션","제노시스","창조에스티","천호정보통신"], "C","consult");
+
+  return list;
+}
+
+/* ===================== 상태 & 저장 (구글시트 연동) ===================== */
+const SHEETS_URL = "https://script.google.com/macros/s/AKfycbwYVvz5-xQnBomVicSTCRYm3m3ZN1mTcntltawYegS4bCd6Z0nkUdLbcGmKxBMzrJuu/exec";
+let STATE = { companies: [], view: "dashboard", filterLevel:"", filterStage:"", search:"", modalId:null, addingNew:false, intakeForm: freshIntakeForm(),
+  dashAssigneeQuery:"", dashCompanyQuery:"", updateWeekKey:"", updateAssignee:"" };
+
+function freshIntakeForm(){
+  return {
+    companyName:"", gitRep:"", procName:"", procPhone:"", procEmail:"",
+    businessCard:"",
+    items:{ sw:false, video:false, access:false, parking:false, bell:false },
+    docs:{ consulting:false, bizReg:false, bankbook:false, catalog:false, cardInfo:false },
+    swReg:{ masReg:false, thirdPartyReg:false },
+    itemReg:{ video:false, access:false, parking:false, bell:false },
+    observerModel:"", observerNote:"",
+    goods:{ masRegistered:"", modelName:"", directProdCert:"", directProdCertHeld:"", hasMainProduct:"", productType:"" },
+    mainKc:{
+      email:"", phone:"",
+      video:{ hub:"", poe:"", camera:"" },
+      access:{ acu:"", reader:"", etc:"" },
+      parking:{ server:"", carReader:"", sign:"", feeCalc:"", gate:"" },
+      bell:{ wireless:"", indoor:"", outdoor:"", server:"" }
+    }
+  };
+}
+
+function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
+
+async function loadData(){
+  try{
+    const res = await fetch(SHEETS_URL, { method: "GET" });
+    const data = await res.json();
+    if(data && data.ok && Array.isArray(data.companies) && data.companies.length > 0){
+      STATE.companies = data.companies.map(c=>Object.assign({businessCard:"", checklist:[], managerEmail:"", intake:null}, c));
+    } else {
+      // 시트가 비어있으면 초기 데이터로 채워서 그대로 시트에 저장해둔다.
+      STATE.companies = buildSeed();
+      await saveData();
+    }
+  }catch(e){
+    console.error("불러오기 실패", e);
+    STATE.companies = buildSeed();
+    showToast("구글시트에서 데이터를 불러오지 못했어요. 네트워크 상태를 확인하거나 잠시 후 새로고침해 주세요.");
+  }
+  render();
+}
+
+// 저장 요청이 겹치지 않도록 큐로 묶어서 순차 처리하고, 실패 시 자동 재시도한다.
+let _saveInFlight = false;
+let _saveQueued = false;
+async function saveData(){
+  _saveQueued = true;
+  if(_saveInFlight) return;
+  _saveInFlight = true;
+  while(_saveQueued){
+    _saveQueued = false;
+    const snapshot = JSON.parse(JSON.stringify(STATE.companies)); // 전송 시점 스냅샷
+    setSaveStatus("saving");
+    const ok = await saveWithRetry(snapshot, 3);
+    setSaveStatus(ok ? "ok" : "error");
+  }
+  _saveInFlight = false;
+}
+async function saveWithRetry(companiesSnapshot, attemptsLeft){
+  try{
+    const res = await fetch(SHEETS_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" }, // 브라우저 preflight(OPTIONS)를 피하기 위해 text/plain 사용
+      body: JSON.stringify({ companies: companiesSnapshot })
+    });
+    const data = await res.json();
+    if(!data || !data.ok) throw new Error((data && data.error) || "unknown error");
+    return true;
+  }catch(e){
+    console.error("저장 실패", e);
+    if(attemptsLeft > 1){
+      await sleep(800);
+      return saveWithRetry(companiesSnapshot, attemptsLeft - 1);
+    }
+    return false;
+  }
+}
+
+let _statusEl = null;
+let _bgRetryTimer = null;
+function setSaveStatus(state){
+  if(!_statusEl){
+    _statusEl = document.createElement("div");
+    _statusEl.className = "save-status";
+    _statusEl.title = "클릭하면 즉시 다시 저장을 시도해요";
+    _statusEl.addEventListener("click", ()=>{ if(_statusEl.classList.contains("error")) saveData(); });
+    document.body.appendChild(_statusEl);
+  }
+  clearTimeout(setSaveStatus._hideTimer);
+  const labels = { saving:"구글시트에 저장 중...", ok:"구글시트에 저장됨", error:"저장 실패 · 클릭해서 재시도" };
+  _statusEl.className = "save-status visible " + state;
+  _statusEl.style.cursor = state === "error" ? "pointer" : "default";
+  _statusEl.innerHTML = "";
+  _statusEl.appendChild(el("span",{class:"sdot"}));
+  _statusEl.appendChild(document.createTextNode(labels[state] || ""));
+
+  if(state === "ok"){
+    setSaveStatus._hideTimer = setTimeout(()=>{ _statusEl.classList.remove("visible"); }, 2200);
+    clearInterval(_bgRetryTimer); _bgRetryTimer = null;
+    setSaveStatus._warned = false;
+  }
+  if(state === "error"){
+    if(!setSaveStatus._warned){
+      setSaveStatus._warned = true;
+      showToast("구글시트 저장에 실패했어요. Apps Script 배포 상태(액세스 권한: 전체)를 확인해 주세요. 지금 화면 내용은 '데이터 백업'으로도 받아두실 수 있어요.");
+    }
+    // 30초마다 조용히 자동 재시도 (백엔드가 복구되면 자동으로 다시 저장됨)
+    if(!_bgRetryTimer){
+      _bgRetryTimer = setInterval(()=>{ saveData(); }, 30000);
+    }
+  }
+}
+
+function showToast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=>t.classList.remove("show"), 2600);
+}
+
+/* ===================== 다운로드 / 백업 ===================== */
+function downloadBlob(content, filename, mime){
+  const blob = new Blob([content], {type: mime});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 3000);
+}
+function csvEscape(v){
+  if(v==null) v="";
+  v = String(v);
+  if(/[",\n]/.test(v)) v = '"'+v.replace(/"/g,'""')+'"';
+  return v;
+}
+function exportReport(){
+  const headers = ["공종","업체명","레벨","DROP여부","진행단계","담당자","주소","대표자성함","대표자연락처","실무담당자성함","실무담당자연락처","최근기록일","최근기록내용","기록수"];
+  const rows = [headers];
+  const sorted = STATE.companies.slice().sort((a,b)=>{
+    if(a.category!==b.category) return CATEGORIES.indexOf(a.category)-CATEGORIES.indexOf(b.category);
+    if(a.dropped!==b.dropped) return a.dropped?1:-1;
+    return LEVELS.indexOf(a.level)-LEVELS.indexOf(b.level);
+  });
+  sorted.forEach(c=>{
+    const histSorted = (c.history||[]).slice().sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+    const last = histSorted[0];
+    rows.push([
+      c.category, c.name, c.level, c.dropped?"DROP":"",
+      (STAGES.find(s=>s.id===c.stage)||{}).label||"",
+      c.assignee, c.address, c.ceoName, c.ceoPhone, c.managerName, c.managerPhone,
+      last?last.date:"", last?last.text:"", String((c.history||[]).length)
+    ]);
+  });
+  const csv = rows.map(r=>r.map(csvEscape).join(",")).join("\r\n");
+  downloadBlob("\uFEFF"+csv, "MAS영업현황_"+today()+".csv", "text/csv;charset=utf-8;");
+  showToast("보고서를 다운로드했어요");
+}
+function exportBackup(){
+  downloadBlob(JSON.stringify(STATE.companies, null, 2), "MAS백업_"+today()+".json", "application/json;charset=utf-8;");
+  showToast("백업 파일을 다운로드했어요");
+}
+function importBackup(file){
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    try{
+      const parsed = JSON.parse(e.target.result);
+      if(!Array.isArray(parsed)) throw new Error("invalid format");
+      STATE.companies = parsed;
+      saveData();
+      render();
+      showToast("백업 데이터를 복원했어요");
+    }catch(err){
+      showToast("백업 파일을 읽을 수 없어요");
+    }
+  };
+  reader.readAsText(file);
+}
+
+/* ===================== 렌더 ===================== */
+function el(tag, attrs, ...children){
+  const e = document.createElement(tag);
+  for(const k in (attrs||{})){
+    if(k==="class") e.className = attrs[k];
+    else if(k.startsWith("on")) e.addEventListener(k.slice(2), attrs[k]);
+    else if(k==="html") e.innerHTML = attrs[k];
+    else e.setAttribute(k, attrs[k]);
+  }
+  children.flat().forEach(c=>{
+    if(c==null) return;
+    e.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
+  });
+  return e;
+}
+
+function catCount(cat){ return STATE.companies.filter(c=>c.category===cat).length; }
+
+function render(){
+  const app = document.getElementById("app");
+  app.innerHTML = "";
+  app.appendChild(renderSidebar());
+  app.appendChild(renderMain());
+  if(STATE.modalId || STATE.addingNew){
+    app.appendChild(renderModal());
+  }
+}
+
+function renderSidebar(){
+  const sb = el("div", {id:"sidebar"});
+  sb.appendChild(el("div", {class:"brand"}, el("span",{class:"dot"}), "MAS 영업 파이프라인"));
+
+  const dash = el("div", {class:"nav-item"+(STATE.view==="dashboard"?" active":""), onclick:()=>{STATE.view="dashboard"; render();}}, "대시보드");
+  sb.appendChild(dash);
+
+  const checklistNav = el("div", {class:"nav-item"+(STATE.view==="checklist"?" active":""), onclick:()=>{STATE.view="checklist"; render();}}, "📋 업체 체크리스트");
+  sb.appendChild(checklistNav);
+
+  const specBtns = el("div",{class:"spec-nav"},
+    el("div",{class:"spec-nav-item", onclick:()=>openSpecReport("parking")}, "🅿️ 주차관제 구성"),
+    el("div",{class:"spec-nav-item", onclick:()=>openSpecReport("access")}, "🚪 출입통제 구성"),
+    el("div",{class:"spec-nav-item", onclick:()=>openSpecReport("bell")}, "🔔 비상벨 구성"),
+    el("div",{class:"spec-nav-item", onclick:()=>openSpecReport("video")}, "🎥 영상감시 구성"),
+  );
+  sb.appendChild(specBtns);
+
+  sb.appendChild(el("div",{class:"nav-section-label"}, "공종별"));
+  CATEGORIES.forEach(cat=>{
+    const n = catCount(cat);
+    sb.appendChild(el("div",{class:"nav-item"+(STATE.view===cat?" active":""), onclick:()=>{STATE.view=cat; STATE.filterLevel=""; STATE.filterStage=""; STATE.search=""; render();}},
+      el("span",null,cat), el("span",{class:"badge"}, String(n))
+    ));
+  });
+
+  sb.appendChild(el("div",{class:"foot"}, "총 "+STATE.companies.length+"개 업체 관리 중", el("br"), "변경사항은 연결된 구글시트에 자동 저장됩니다."));
+
+  const fileInput = el("input",{type:"file", accept:"application/json", style:"display:none;", onchange:(e)=>{
+    if(e.target.files && e.target.files[0]) importBackup(e.target.files[0]);
+    e.target.value = "";
+  }});
+  const actions = el("div",{class:"sidebar-actions"},
+    el("button",{class:"sidebar-btn", onclick:()=>window.open("https://docs.google.com/spreadsheets/d/1haGYcFshc5kEXYX0NdWYH288puvQqfWKMc8yc9tXlgQ/edit#gid=245678759","_blank")}, "↗ 구글시트 바로가기"),
+    el("button",{class:"sidebar-btn", onclick:exportReport}, "⬇ 전체 보고서 다운로드 (CSV)"),
+    el("button",{class:"sidebar-btn", onclick:exportBackup}, "⬇ 데이터 백업 (JSON)"),
+    el("button",{class:"sidebar-btn", onclick:()=>fileInput.click()}, "⬆ 백업 파일로 복원"),
+    fileInput
+  );
+  sb.appendChild(actions);
+  return sb;
+}
+
+function stageProgress(c){
+  const idx = STAGE_INDEX[c.stage] ?? 0;
+  const wrap = el("div",{class:"stage-track"});
+  STAGES.forEach((s,i)=>{
+    wrap.appendChild(el("div",{class:"stage-dot"+(i<idx?" done":(i===idx?" current":""))}));
+    if(i<STAGES.length-1) wrap.appendChild(el("div",{class:"stage-line"+(i<idx?" done":"")}));
+  });
+  if(c.dropped){
+    wrap.appendChild(el("span",{class:"dropped-label"}, " · DROP"));
+  } else {
+    wrap.appendChild(el("span",{class:"stage-label-current"}, STAGES[idx].label));
+  }
+  return wrap;
+}
+
+function renderMain(){
+  const main = el("div",{id:"main"});
+  if(STATE.view === "dashboard"){
+    main.appendChild(renderDashboard());
+  } else if(STATE.view === "checklist"){
+    main.appendChild(renderIntakeChecklist());
+  } else {
+    main.appendChild(renderCategoryView(STATE.view));
+  }
+  return main;
+}
+
+function renderDashboard(){
+  const wrap = el("div");
+  wrap.appendChild(el("div",{class:"topbar"},
+    el("div",null, el("h1",null,"대시보드"), el("div",{class:"sub"},"공종별 상담 현황과 레벨 분포를 한눈에 확인하세요")),
+    el("div",{class:"toolbar"}, el("button",{class:"btn-primary", onclick:()=>{STATE.addingNew=true; render();}}, "+ 업체 추가"))
+  ));
+
+  const cards = el("div",{class:"grid-cards"});
+  CATEGORIES.forEach(cat=>{
+    const items = STATE.companies.filter(c=>c.category===cat);
+    const active = items.filter(c=>!c.dropped);
+    const dropped = items.filter(c=>c.dropped);
+    const byLevel = {A:0,B:0,C:0};
+    active.forEach(c=>byLevel[c.level]++);
+    const card = el("div",{class:"stat-card", onclick:()=>{STATE.view=cat; render();}},
+      el("div",{class:"label"}, cat),
+      el("div",{class:"num"}, String(items.length)+"개"),
+      el("div",{class:"breakdown"},
+        el("span",{class:"pill A"}, "A "+byLevel.A),
+        el("span",{class:"pill B"}, "B "+byLevel.B),
+        el("span",{class:"pill C"}, "C "+byLevel.C),
+      ),
+      dropped.length ? el("div",{style:"margin-top:6px;font-size:11px;color:var(--drop);font-weight:700;"}, "DROP "+dropped.length+"개") : null
+    );
+    cards.appendChild(card);
+  });
+  wrap.appendChild(cards);
+
+  // 빠른 조회 (영업자별 / 업체별 검색)
+  const searchSec = el("div",{class:"search-sec"});
+  searchSec.appendChild(el("div",{class:"section-title"},"빠른 조회"));
+  const searchRow = el("div",{class:"search-row"});
+
+  const assigneeList = el("datalist",{id:"assignee-datalist"});
+  distinctAssignees().forEach(name=> assigneeList.appendChild(el("option",{value:name})));
+  const assigneeInput = el("input",{type:"text", list:"assignee-datalist", placeholder:"영업자명 입력 또는 목록에서 선택"});
+  assigneeInput.value = STATE.dashAssigneeQuery;
+  assigneeInput.addEventListener("input", (e)=>{ STATE.dashAssigneeQuery = e.target.value; refreshResults(); });
+
+  const companyInput = el("input",{type:"text", placeholder:"업체명으로 검색"});
+  companyInput.value = STATE.dashCompanyQuery;
+  companyInput.addEventListener("input", (e)=>{ STATE.dashCompanyQuery = e.target.value; refreshResults(); });
+
+  searchRow.appendChild(el("div",{class:"search-field"}, el("label",null,"영업자별 검색"), assigneeInput, assigneeList));
+  searchRow.appendChild(el("div",{class:"search-field"}, el("label",null,"업체별 검색"), companyInput));
+  searchSec.appendChild(searchRow);
+
+  const resultsHolder = el("div",{id:"dash-search-results"});
+  searchSec.appendChild(resultsHolder);
+  wrap.appendChild(searchSec);
+
+  function refreshResults(){
+    resultsHolder.innerHTML = "";
+    const el2 = buildDashSearchResults();
+    if(el2) resultsHolder.appendChild(el2);
+  }
+  refreshResults();
+
+  // 전체 파이프라인 단계 요약 테이블
+  const table = el("table",{class:"pipeline-table"});
+  table.appendChild(el("tr",null,
+    el("th",null,"공종"),
+    ...STAGES.map(s=>el("th",null,s.label)),
+    el("th",null,"DROP")
+  ));
+  CATEGORIES.forEach(cat=>{
+    const items = STATE.companies.filter(c=>c.category===cat);
+    const row = el("tr",null, el("td",{class:"company-name-cell"}, cat));
+    STAGES.forEach(s=>{
+      const n = items.filter(c=>!c.dropped && c.stage===s.id).length;
+      row.appendChild(el("td",null, n ? String(n) : "-"));
+    });
+    row.appendChild(el("td",null, String(items.filter(c=>c.dropped).length) || "-"));
+    table.appendChild(row);
+  });
+  const tblWrap = el("div",null, el("div",{class:"section-title"},"단계별 전체 현황"), table);
+  wrap.appendChild(tblWrap);
+
+  // 날짜별 업데이트 내역 (주간 선택 + 영업자 선택 · 3열)
+  const allHistory = [];
+  STATE.companies.forEach(c=>{
+    (c.history||[]).forEach(h=> allHistory.push({date:h.date||"", text:h.text||"", name:c.name, category:c.category, assignee:c.assignee||""}));
+  });
+  const weekOptions = computeWeekOptions(allHistory);
+  if(!STATE.updateWeekKey || !weekOptions.find(w=>w.key===STATE.updateWeekKey)){
+    STATE.updateWeekKey = weekOptions.length ? weekOptions[0].key : "";
+  }
+
+  const histSection = el("div",{style:"margin-top:26px;"});
+  const histHead = el("div",{class:"hist-head"});
+  histHead.appendChild(el("div",{class:"section-title", style:"margin:0;flex:1;"},"날짜별 업데이트 내역"));
+
+  const weekSelect = el("select",{onchange:(e)=>{ STATE.updateWeekKey = e.target.value; render(); }});
+  if(weekOptions.length===0){
+    weekSelect.appendChild(el("option",{value:""},"선택 가능한 주 없음"));
+  }
+  weekOptions.forEach(w=>{
+    const opt = el("option",{value:w.key}, weekLabelFull(w.start));
+    if(w.key === STATE.updateWeekKey) opt.setAttribute("selected","selected");
+    weekSelect.appendChild(opt);
+  });
+
+  const assigneeSelect = el("select",{onchange:(e)=>{ STATE.updateAssignee = e.target.value; render(); }});
+  assigneeSelect.appendChild(el("option",{value:""},"전체 담당자"));
+  distinctAssignees().forEach(name=>{
+    const opt = el("option",{value:name}, name);
+    if(name === STATE.updateAssignee) opt.setAttribute("selected","selected");
+    assigneeSelect.appendChild(opt);
+  });
+
+  histHead.appendChild(weekSelect);
+  histHead.appendChild(assigneeSelect);
+  histSection.appendChild(histHead);
+
+  let filtered = allHistory;
+  if(STATE.updateWeekKey){
+    const monSel = new Date(STATE.updateWeekKey+"T00:00:00");
+    const sunSel = new Date(monSel); sunSel.setDate(monSel.getDate()+6);
+    filtered = filtered.filter(h=>{
+      if(!h.date) return false;
+      const d = new Date(h.date+"T00:00:00");
+      return !isNaN(d.getTime()) && d>=monSel && d<=sunSel;
+    });
+  }
+  if(STATE.updateAssignee){
+    filtered = filtered.filter(h=> h.assignee === STATE.updateAssignee);
+  }
+  filtered.sort((a,b)=> b.date.localeCompare(a.date));
+
+  if(filtered.length===0){
+    histSection.appendChild(el("div",{class:"empty-state"}, el("b",null,"해당 조건의 업데이트 내역이 없어요."), el("div",null,"기간이나 담당자 필터를 변경해보세요.")));
+  } else {
+    const cols = el("div",{class:"update-columns"});
+    filtered.forEach(h=>{
+      cols.appendChild(el("div",{class:"update-item"},
+        el("div",{class:"update-date"}, h.date || "-"),
+        el("div",{class:"update-body"},
+          el("span",{class:"update-company"}, h.name+" · "+h.category+(h.assignee?" · "+h.assignee:"")),
+          el("div",null, h.text)
+        )
+      ));
+    });
+    histSection.appendChild(cols);
+  }
+  wrap.appendChild(histSection);
+
+  return wrap;
+}
+
+function distinctAssignees(){
+  const set = new Set();
+  STATE.companies.forEach(c=>{ if(c.assignee && c.assignee.trim()) set.add(c.assignee.trim()); });
+  return Array.from(set).sort((a,b)=>a.localeCompare(b,"ko"));
+}
+
+function buildDashSearchResults(){
+  const aq = STATE.dashAssigneeQuery.trim();
+  const cq = STATE.dashCompanyQuery.trim();
+  if(!aq && !cq) return null;
+
+  const results = STATE.companies.filter(c=>{
+    let ok = true;
+    if(aq) ok = ok && (c.assignee||"").includes(aq);
+    if(cq) ok = ok && (c.name||"").includes(cq);
+    return ok;
+  });
+
+  if(results.length===0){
+    return el("div",{class:"empty-state", style:"margin-top:10px;"}, el("b",null,"조건에 맞는 업체가 없어요."));
+  }
+
+  const table = el("table",{class:"pipeline-table", style:"margin-top:10px;"});
+  table.appendChild(el("tr",null, el("th",null,"업체명"), el("th",null,"공종"), el("th",null,"레벨"), el("th",null,"진행 단계"), el("th",null,"담당자"), el("th",null,"실무 연락처")));
+  results.forEach(c=>{
+    table.appendChild(el("tr",{onclick:()=>{ STATE.modalId=c.id; render(); }},
+      el("td",{class:"company-name-cell"}, c.name),
+      el("td",null, c.category),
+      el("td",null, el("span",{class:"level-tag "+(c.dropped?"DROP":c.level)}, c.dropped?"DROP":c.level)),
+      el("td",null, stageProgress(c)),
+      el("td",null, c.assignee ? el("span",{class:"assignee-chip"}, c.assignee) : el("span",{class:"assignee-chip empty"}, "미지정")),
+      el("td",null, c.managerName ? (c.managerName+(c.managerPhone?" · "+c.managerPhone:"")) : "-")
+    ));
+  });
+  return el("div",null, el("div",{style:"font-size:12px;color:var(--ink-soft);margin-top:10px;margin-bottom:2px;"}, results.length+"건 검색됨"), table);
+}
+
+function computeWeekOptions(historyList){
+  const map = new Map();
+  historyList.forEach(h=>{
+    if(!h.date) return;
+    const d = new Date(h.date+"T00:00:00");
+    if(isNaN(d.getTime())) return;
+    const mon = getMonday(d);
+    const key = mon.toISOString().slice(0,10);
+    if(!map.has(key)) map.set(key, {key, start:mon});
+  });
+  return Array.from(map.values()).sort((a,b)=> b.start - a.start);
+}
+function weekLabelFull(mon){
+  const sun = new Date(mon); sun.setDate(mon.getDate()+6);
+  const fmt = (x)=> x.getFullYear()+"년 "+(x.getMonth()+1)+"월 "+x.getDate()+"일";
+  return fmt(mon)+" ~ "+fmt(sun);
+}
+
+function getMonday(d){
+  const date = new Date(d);
+  const day = date.getDay();
+  const diff = date.getDate() - day + (day===0 ? -6 : 1);
+  const monday = new Date(date);
+  monday.setDate(diff);
+  monday.setHours(0,0,0,0);
+  return monday;
+}
+function formatWeekLabel(dateStr){
+  if(!dateStr) return "날짜 미상";
+  const d = new Date(dateStr+"T00:00:00");
+  if(isNaN(d.getTime())) return "날짜 미상";
+  const mon = getMonday(d);
+  const sun = new Date(mon); sun.setDate(mon.getDate()+6);
+  const fmt = (x)=> (x.getMonth()+1)+"월 "+x.getDate()+"일";
+  return fmt(mon)+" ~ "+fmt(sun);
+}
+
+function renderCategoryView(cat){
+  const wrap = el("div");
+  wrap.appendChild(el("div",{class:"topbar"},
+    el("div",null, el("h1",null,cat), el("div",{class:"sub"}, catCount(cat)+"개 업체")),
+    el("div",{class:"toolbar"},
+      el("input",{type:"text", placeholder:"업체명 검색", value:STATE.search, oninput:(e)=>{STATE.search=e.target.value; renderInto();}}),
+      selectFilter("filterLevel", ["","A","B","C"], {"":"전체 레벨","A":"A","B":"B","C":"C"}),
+      selectFilter("filterStage", ["", ...STAGES.map(s=>s.id), "dropped"], {"":"전체 단계", ...Object.fromEntries(STAGES.map(s=>[s.id,s.label])), "dropped":"DROP"}),
+      el("button",{class:"btn-primary", onclick:()=>{STATE.addingNew=true; render();}}, "+ 업체 추가")
+    )
+  ));
+
+  wrap.appendChild(el("div",{id:"cat-table-holder"}, buildCategoryTable(cat)));
+  return wrap;
+
+  function renderInto(){
+    const holder = document.getElementById("cat-table-holder");
+    holder.innerHTML = "";
+    holder.appendChild(buildCategoryTable(cat));
+  }
+}
+
+function selectFilter(key, values, labelMap){
+  const sel = el("select",{onchange:(e)=>{STATE[key]=e.target.value; render();}});
+  values.forEach(v=>{
+    const o = el("option",{value:v}, labelMap[v]);
+    if(STATE[key]===v) o.setAttribute("selected","selected");
+    sel.appendChild(o);
+  });
+  return sel;
+}
+
+function buildCategoryTable(cat){
+  let items = STATE.companies.filter(c=>c.category===cat);
+  if(STATE.search) items = items.filter(c=>c.name.includes(STATE.search));
+  if(STATE.filterLevel) items = items.filter(c=>c.level===STATE.filterLevel);
+  if(STATE.filterStage === "dropped") items = items.filter(c=>c.dropped);
+  else if(STATE.filterStage) items = items.filter(c=>!c.dropped && c.stage===STATE.filterStage);
+
+  items = items.slice().sort((a,b)=>{
+    if(a.dropped !== b.dropped) return a.dropped ? 1 : -1;
+    const li = LEVELS.indexOf(a.level) - LEVELS.indexOf(b.level);
+    if(li!==0) return li;
+    return (STAGE_INDEX[b.stage]||0) - (STAGE_INDEX[a.stage]||0);
+  });
+
+  if(items.length===0){
+    return el("div",{class:"empty-state"}, el("b",null,"조건에 맞는 업체가 없어요."), el("div",null,"필터를 조정하거나 새 업체를 추가해 보세요."));
+  }
+
+  const table = el("table",{class:"pipeline-table"});
+  table.appendChild(el("tr",null, el("th",null,"업체명"), el("th",null,"레벨"), el("th",null,"진행 단계"), el("th",null,"담당자"), el("th",null,"실무 연락처")));
+  items.forEach(c=>{
+    const row = el("tr",{onclick:()=>{STATE.modalId=c.id; render();}},
+      el("td",{class:"company-name-cell"}, c.name),
+      el("td",null, el("span",{class:"level-tag "+(c.dropped?"DROP":c.level)}, c.dropped?"DROP":c.level)),
+      el("td",null, stageProgress(c)),
+      el("td",null, c.assignee ? el("span",{class:"assignee-chip"}, c.assignee) : el("span",{class:"assignee-chip empty"}, "미지정")),
+      el("td",null, c.managerName ? (c.managerName+(c.managerPhone?" · "+c.managerPhone:"")) : "-")
+    );
+    table.appendChild(row);
+  });
+  return table;
+}
+
+/* ===================== 신규 상담 체크리스트 ===================== */
+const REQUEST_ITEM_MAP = [ ["sw","S/W","GS인증"], ["video","영상","영상"], ["access","출통","출입"], ["parking","주차","주차"], ["bell","비상벨","비상벨"] ];
+
+function ic(labelText, checked, onChange){
+  const input = el("input",{type:"checkbox"});
+  input.checked = !!checked;
+  input.addEventListener("change", e=>onChange(e.target.checked));
+  return el("label",{class:"chk-item"}, input, labelText);
+}
+function icText(value, onChange, placeholder){
+  const i = el("input",{type:"text", placeholder:placeholder||""});
+  i.value = value||"";
+  i.addEventListener("input", e=>onChange(e.target.value));
+  return i;
+}
+function radioGroup(name, value, onChange){
+  const wrap = el("div",{class:"radio-row"});
+  ["NO","YES"].forEach(v=>{
+    const r = el("input",{type:"radio", name:name});
+    r.checked = value===v;
+    r.addEventListener("change", ()=>{ if(r.checked) onChange(v); });
+    wrap.appendChild(el("label",{class:"radio-item"}, r, v));
+  });
+  return wrap;
+}
+
+function renderIntakeChecklist(){
+  const f = STATE.intakeForm;
+  const wrap = el("div");
+  wrap.appendChild(el("div",{class:"topbar"},
+    el("div",null, el("h1",null,"업체 체크리스트"), el("div",{class:"sub"},"신규 상담 중 바로 입력하는 GIT 조달 등록 확인서")),
+  ));
+
+  const card = el("div",{class:"intake-card"});
+
+  // 기본 정보
+  const s1 = el("div",{class:"intake-sec"});
+  const g1 = el("div",{class:"intake-grid"});
+  g1.appendChild(field("계약 업체명", icText(f.companyName, v=>f.companyName=v, "업체명 입력")));
+  g1.appendChild(field("GIT 영업 담당자", icText(f.gitRep, v=>f.gitRep=v, "우리 측 담당자")));
+  g1.appendChild(field("업체 조달 담당자", icText(f.procName, v=>f.procName=v)));
+  g1.appendChild(field("연락처", icText(f.procPhone, v=>f.procPhone=v, "010-0000-0000")));
+  g1.appendChild(field("E-Mail", icText(f.procEmail, v=>f.procEmail=v)));
+  const itemsWrap = el("div",{class:"field full"}, el("label",null,"요청 품목"));
+  const itemsRow = el("div",{class:"chk-row"});
+  REQUEST_ITEM_MAP.forEach(([key,label])=>{
+    itemsRow.appendChild(ic(label, f.items[key], v=>f.items[key]=v));
+  });
+  itemsWrap.appendChild(itemsRow);
+  const full1 = el("div",{class:"field full"}); full1.appendChild(itemsWrap);
+  g1.appendChild(full1);
+  s1.appendChild(g1);
+  const cardSec = el("div",{style:"margin-top:14px;"}, el("label",null,"명함 촬영/등록"), intakeCardField(f));
+  s1.appendChild(cardSec);
+  card.appendChild(s1);
+
+  // 확인 사항
+  const s2 = el("div",{class:"intake-sec"});
+  s2.appendChild(el("div",{class:"intake-sec-title"}, el("span",{class:"mark"},"■"), "확인 사항"));
+  s2.appendChild(el("div",{class:"intake-sub"},"○ 공통 필요 서류 확인"));
+  s2.appendChild(el("div",{class:"chk-row"},
+    ic("컨설팅 계약서", f.docs.consulting, v=>f.docs.consulting=v),
+    ic("사업자등록증", f.docs.bizReg, v=>f.docs.bizReg=v),
+    ic("통장 사본", f.docs.bankbook, v=>f.docs.bankbook=v),
+    ic("회사카다로그/지명원", f.docs.catalog, v=>f.docs.catalog=v),
+    ic("담당자 명함 정보", f.docs.cardInfo, v=>f.docs.cardInfo=v),
+  ));
+  s2.appendChild(el("div",{class:"intake-sub"},"○ 소프트웨어 등록"));
+  s2.appendChild(el("div",{class:"chk-row"},
+    ic("옵저버 MAS 등록", f.swReg.masReg, v=>f.swReg.masReg=v),
+    ic("옵저버 3자단가 등록", f.swReg.thirdPartyReg, v=>f.swReg.thirdPartyReg=v),
+  ));
+  s2.appendChild(el("div",{class:"intake-sub"},"○ 물품 등록"));
+  s2.appendChild(el("div",{class:"chk-row"},
+    ic("영상감시장치", f.itemReg.video, v=>f.itemReg.video=v),
+    ic("출입통제시스템", f.itemReg.access, v=>f.itemReg.access=v),
+    ic("주차관제시스템", f.itemReg.parking, v=>f.itemReg.parking=v),
+    ic("비상벨", f.itemReg.bell, v=>f.itemReg.bell=v),
+  ));
+  card.appendChild(s2);
+
+  // Observer 조달 등록
+  const s3 = el("div",{class:"intake-sec"});
+  s3.appendChild(el("div",{class:"intake-sec-title"}, el("span",{class:"mark"},"■"), "Observer 조달 등록"));
+  s3.appendChild(field("소프트웨어 모델명", icText(f.observerModel, v=>f.observerModel=v, "예) 업체명-Observer, Observer-지역명")));
+  card.appendChild(s3);
+
+  // Observer 조달 등록 시 확인
+  const s4 = el("div",{class:"intake-sec"});
+  s4.appendChild(el("div",{class:"intake-sec-title"}, el("span",{class:"mark"},"■"), "Observer 조달 등록 시 확인"));
+  const obsNote = el("textarea",{rows:"3", placeholder:"확인 내용을 자유롭게 기록하세요"});
+  obsNote.value = f.observerNote||"";
+  obsNote.addEventListener("input", e=>f.observerNote=e.target.value);
+  s4.appendChild(obsNote);
+  card.appendChild(s4);
+
+  // 물품 조달 등록
+  const s5 = el("div",{class:"intake-sec"});
+  s5.appendChild(el("div",{class:"intake-sec-title"}, el("span",{class:"mark"},"■"), "MAS 물품 조달 등록"));
+  const rows5 = [
+    ["1. 기존 MAS 등록 여부","masRegistered","modelName","대표 모델명"],
+    ["2. 직접생산확인증 등록 여부","directProdCert","directProdCertHeld","보유 직생확인증"],
+    ["3. 등록 물품 주제품 보유 여부","hasMainProduct","productType","제품 종류"],
+  ];
+  rows5.forEach(([label,key,textKey,textLabel])=>{
+    const row = el("div",{class:"intake-grid", style:"margin-bottom:10px;"});
+    row.appendChild(field(label, radioGroup(key, f.goods[key], v=>f.goods[key]=v)));
+    row.appendChild(field(textLabel, icText(f.goods[textKey], v=>f.goods[textKey]=v)));
+    s5.appendChild(row);
+  });
+  card.appendChild(s5);
+
+  // 물품 조달 등록 시 확인
+  const s6 = el("div",{class:"intake-sec"});
+  s6.appendChild(el("div",{class:"intake-sec-title"}, el("span",{class:"mark"},"■"), "물품 조달 등록 시 확인"));
+
+  s6.appendChild(el("div",{class:"intake-sub"},"1. 주제품 필요 시 - KC인증 대행 진행"));
+  s6.appendChild(el("div",{class:"prep-doc-note"}, "📎 준비서류 : 사업자등록증, 회사직인이미지, 담당자 명함정보, 신청서, 카다로그"));
+  const mainContact = el("div",{class:"contact-box intake-grid"});
+  mainContact.appendChild(field("실무 업무 담당자 E-Mail", icText(f.mainKc.email, v=>f.mainKc.email=v)));
+  mainContact.appendChild(field("실무 업무 담당자 휴대폰", icText(f.mainKc.phone, v=>f.mainKc.phone=v)));
+  s6.appendChild(mainContact);
+
+  s6.appendChild(el("div",{class:"intake-sub"},"① 영상감시장치"));
+  s6.appendChild(el("div",{class:"qty-row"},
+    el("span",{class:"qty-item"},"허브스위치", icText(f.mainKc.video.hub, v=>f.mainKc.video.hub=v,"수량")),
+    el("span",{class:"qty-item"},"PoE 인젝터", icText(f.mainKc.video.poe, v=>f.mainKc.video.poe=v,"수량")),
+    el("span",{class:"qty-item"},"카메라", icText(f.mainKc.video.camera, v=>f.mainKc.video.camera=v,"수량")),
+  ));
+
+  s6.appendChild(el("div",{class:"intake-sub"},"② 출입통제시스템"));
+  s6.appendChild(el("div",{class:"qty-row"},
+    el("span",{class:"qty-item"},"ACU", icText(f.mainKc.access.acu, v=>f.mainKc.access.acu=v,"수량")),
+    el("span",{class:"qty-item"},"리더기", icText(f.mainKc.access.reader, v=>f.mainKc.access.reader=v,"수량")),
+    el("span",{class:"qty-item"},"기타", icText(f.mainKc.access.etc, v=>f.mainKc.access.etc=v,"수량")),
+  ));
+
+  s6.appendChild(el("div",{class:"intake-sub"},"③ 주차관제시스템"));
+  s6.appendChild(el("div",{class:"qty-row"},
+    el("span",{class:"qty-item"},"서버", icText(f.mainKc.parking.server, v=>f.mainKc.parking.server=v,"수량")),
+    el("span",{class:"qty-item"},"차량인식기", icText(f.mainKc.parking.carReader, v=>f.mainKc.parking.carReader=v,"수량")),
+    el("span",{class:"qty-item"},"주차안내판", icText(f.mainKc.parking.sign, v=>f.mainKc.parking.sign=v,"수량")),
+    el("span",{class:"qty-item"},"주차요금계산기", icText(f.mainKc.parking.feeCalc, v=>f.mainKc.parking.feeCalc=v,"수량")),
+    el("span",{class:"qty-item"},"차량차단기", icText(f.mainKc.parking.gate, v=>f.mainKc.parking.gate=v,"수량")),
+  ));
+
+  s6.appendChild(el("div",{class:"intake-sub"},"④ 비상벨"));
+  s6.appendChild(el("div",{class:"qty-row"},
+    el("span",{class:"qty-item"},"무선비상벨", icText(f.mainKc.bell.wireless, v=>f.mainKc.bell.wireless=v,"수량")),
+    el("span",{class:"qty-item"},"실내형비상벨", icText(f.mainKc.bell.indoor, v=>f.mainKc.bell.indoor=v,"수량")),
+    el("span",{class:"qty-item"},"실외형비상벨", icText(f.mainKc.bell.outdoor, v=>f.mainKc.bell.outdoor=v,"수량")),
+    el("span",{class:"qty-item"},"서버", icText(f.mainKc.bell.server, v=>f.mainKc.bell.server=v,"수량")),
+  ));
+  card.appendChild(s6);
+
+  // 액션 버튼
+  const actions = el("div",{class:"intake-actions"},
+    el("button",{class:"btn-primary", onclick:()=>saveIntakeChecklist()}, "💾 저장하기"),
+    el("button",{class:"btn-ghost", onclick:()=>{ STATE.intakeForm = freshIntakeForm(); render(); }}, "새 상담 시작(초기화)"),
+  );
+  card.appendChild(actions);
+
+  wrap.appendChild(card);
+  return wrap;
+}
+
+function saveIntakeChecklist(){
+  const f = STATE.intakeForm;
+  if(!f.companyName.trim()){ showToast("계약 업체명을 입력해 주세요"); return; }
+  const selected = REQUEST_ITEM_MAP.filter(([key])=>f.items[key]).map(([,,cat])=>cat);
+  if(selected.length===0){ showToast("요청 품목을 한 개 이상 선택해 주세요"); return; }
+
+  selected.forEach(cat=>{
+    let comp = STATE.companies.find(c=>c.category===cat && c.name===f.companyName.trim());
+    if(!comp){
+      comp = mk(cat, f.companyName.trim(), "B", "consult", false, "");
+      STATE.companies.push(comp);
+    }
+    if(f.gitRep) comp.assignee = f.gitRep;
+    if(f.procName) comp.managerName = f.procName;
+    if(f.procPhone) comp.managerPhone = f.procPhone;
+    if(f.procEmail) comp.managerEmail = f.procEmail;
+    if(f.businessCard) comp.businessCard = f.businessCard;
+    comp.intake = JSON.parse(JSON.stringify(f));
+    comp.history = comp.history || [];
+    comp.history.unshift({date: today(), text: "신규 상담 체크리스트 등록/업데이트 (GIT 담당: "+(f.gitRep||"-")+")"});
+  });
+
+  saveData();
+  showToast("["+f.companyName+"] "+selected.join(", ")+" 공종에 저장했어요");
+  STATE.intakeForm = freshIntakeForm();
+  render();
+}
+
+function yn(v){ return v==="YES" ? "☑ YES" : (v==="NO" ? "☑ NO" : "☐ NO   ☐ YES"); }
+function ck(v){ return v ? "☑" : "☐"; }
+
+function openIntakeReport(f){
+  if(!f || !f.companyName || !f.companyName.trim()){ showToast("먼저 상담 정보를 입력하고 저장해 주세요"); return; }
+  const itemLabel = REQUEST_ITEM_MAP.map(([key,label])=> (f.items[key]?"☑":"☐")+" "+label).join("&nbsp;&nbsp;&nbsp;");
+  const cardImgHtml = f.businessCard ? `<img src="${f.businessCard}" style="max-width:220px;max-height:130px;border:1px solid #333;border-radius:4px;display:block;margin-top:8px;">` : "";
+  const html = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8">
+  <title>최초 상담보고서 - ${escapeHtml(f.companyName)}</title>
+  <style>
+    body{font-family:'Malgun Gothic', 'Pretendard', sans-serif; padding:28px; color:#111; max-width:820px; margin:0 auto;}
+    h1{font-size:18px; text-align:center; margin-bottom:18px;}
+    table{width:100%; border-collapse:collapse; margin-bottom:14px;}
+    td, th{border:1px solid #333; padding:7px 10px; font-size:12.5px; vertical-align:middle;}
+    th{background:#F0F0F0; font-weight:700; width:150px; text-align:left;}
+    .sec{font-weight:800; margin:16px 0 6px; font-size:13px;}
+    .note{font-size:12px; color:#555; white-space:pre-wrap; border:1px solid #333; padding:8px 10px; min-height:40px;}
+    .print-bar{text-align:center; margin-bottom:20px;}
+    .print-bar button{font-size:13px; padding:8px 18px; cursor:pointer;}
+    @media print{ .print-bar{display:none;} }
+  </style></head><body>
+  <div class="print-bar"><button onclick="window.print()">🖨 인쇄 / PDF로 저장</button></div>
+  <h1>GIT 최초 상담보고서</h1>
+  <table>
+    <tr><th>계약 업체명</th><td>${escapeHtml(f.companyName)}</td><th>GIT 영업 담당자</th><td>${escapeHtml(f.gitRep)}</td></tr>
+    <tr><th>업체 조달 담당자</th><td>${escapeHtml(f.procName)}</td><th>연락처</th><td>${escapeHtml(f.procPhone)}</td></tr>
+    <tr><th>요청 품목</th><td>${itemLabel}</td><th>E-Mail</th><td>${escapeHtml(f.procEmail)}</td></tr>
+    <tr><th>담당자 명함</th><td colspan="3">${cardImgHtml || "-"}</td></tr>
+  </table>
+
+  <div class="sec">■ 확인 사항</div>
+  <table>
+    <tr><th>공통 필요 서류</th><td>${ck(f.docs.consulting)} 컨설팅 계약서&nbsp; ${ck(f.docs.bizReg)} 사업자등록증 &nbsp; ${ck(f.docs.bankbook)} 통장 사본 &nbsp; ${ck(f.docs.catalog)} 회사카다로그/지명원 &nbsp; ${ck(f.docs.cardInfo)} 담당자 명함 정보</td></tr>
+    <tr><th>소프트웨어 등록</th><td>${ck(f.swReg.masReg)} 옵저버 MAS 등록 &nbsp; ${ck(f.swReg.thirdPartyReg)} 옵저버 3자단가 등록</td></tr>
+    <tr><th>물품 등록</th><td>${ck(f.itemReg.video)} 영상감시장치 &nbsp; ${ck(f.itemReg.access)} 출입통제시스템 &nbsp; ${ck(f.itemReg.parking)} 주차관제시스템 &nbsp; ${ck(f.itemReg.bell)} 비상벨</td></tr>
+  </table>
+
+  <div class="sec">■ Observer 조달 등록</div>
+  <table><tr><th>소프트웨어 모델명</th><td>${escapeHtml(f.observerModel)}</td></tr></table>
+  <div class="sec">■ Observer 조달 등록 시 확인</div>
+  <div class="note">${escapeHtml(f.observerNote)}</div>
+
+  <div class="sec">■ MAS 물품 조달 등록</div>
+  <table>
+    <tr><th>1. 기존 MAS 등록 여부</th><td>${yn(f.goods.masRegistered)}</td><th>대표 모델명</th><td>${escapeHtml(f.goods.modelName)}</td></tr>
+    <tr><th>2. 직접생산확인증 등록 여부</th><td>${yn(f.goods.directProdCert)}</td><th>보유 직생확인증</th><td>${escapeHtml(f.goods.directProdCertHeld)}</td></tr>
+    <tr><th>3. 등록 물품 주제품 보유 여부</th><td>${yn(f.goods.hasMainProduct)}</td><th>제품 종류</th><td>${escapeHtml(f.goods.productType)}</td></tr>
+  </table>
+
+  <div class="sec">■ 물품 조달 등록 시 확인 (1. 주제품 필요 시 - KC인증 대행 진행)</div>
+  <table>
+    <tr><th>준비서류</th><td colspan="3">사업자등록증, 회사직인이미지, 담당자 명함정보, 신청서, 카다로그</td></tr>
+    <tr><th>실무 담당자 정보</th><td colspan="3">E-Mail: ${escapeHtml(f.mainKc.email)} &nbsp;&nbsp; 휴대폰: ${escapeHtml(f.mainKc.phone)}</td></tr>
+    <tr><th>① 영상감시장치</th><td colspan="3">허브스위치( ${escapeHtml(f.mainKc.video.hub)} ) &nbsp;&nbsp; PoE 인젝터( ${escapeHtml(f.mainKc.video.poe)} ) &nbsp;&nbsp; 카메라( ${escapeHtml(f.mainKc.video.camera)} )</td></tr>
+    <tr><th>② 출입통제시스템</th><td colspan="3">ACU( ${escapeHtml(f.mainKc.access.acu)} ) &nbsp;&nbsp; 리더기( ${escapeHtml(f.mainKc.access.reader)} ) &nbsp;&nbsp; 기타( ${escapeHtml(f.mainKc.access.etc)} )</td></tr>
+    <tr><th>③ 주차관제시스템</th><td colspan="3">서버( ${escapeHtml(f.mainKc.parking.server)} ) &nbsp;&nbsp; 차량인식기( ${escapeHtml(f.mainKc.parking.carReader)} ) &nbsp;&nbsp; 주차안내판( ${escapeHtml(f.mainKc.parking.sign)} ) &nbsp;&nbsp; 주차요금계산기( ${escapeHtml(f.mainKc.parking.feeCalc)} ) &nbsp;&nbsp; 차량차단기( ${escapeHtml(f.mainKc.parking.gate)} )</td></tr>
+    <tr><th>④ 비상벨</th><td colspan="3">무선비상벨( ${escapeHtml(f.mainKc.bell.wireless)} ) &nbsp;&nbsp; 실내형비상벨( ${escapeHtml(f.mainKc.bell.indoor)} ) &nbsp;&nbsp; 실외형비상벨( ${escapeHtml(f.mainKc.bell.outdoor)} ) &nbsp;&nbsp; 서버( ${escapeHtml(f.mainKc.bell.server)} )</td></tr>
+  </table>
+  <div style="margin-top:20px; font-size:11px; color:#888;">작성일: ${today()}</div>
+  </body></html>`;
+  const w = window.open("", "_blank");
+  if(!w){ showToast("팝업이 차단되어 새 창을 열지 못했어요. 브라우저 팝업 차단을 해제해 주세요."); return; }
+  w.document.open(); w.document.write(html); w.document.close();
+}
+function escapeHtml(s){
+  return String(s||"").replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+}
+
+/* ===================== 공종별 등록/인증 단가표 (새창) ===================== */
+function specWindowShell(title, bodyHtml){
+  const html = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8">
+  <title>${escapeHtml(title)}</title>
+  <style>
+    body{font-family:'Malgun Gothic','Pretendard',sans-serif; padding:26px; color:#111; max-width:980px; margin:0 auto;}
+    h1{font-size:18px; margin-bottom:4px;}
+    .sub{font-size:12px; color:#666; margin-bottom:18px;}
+    table{width:100%; border-collapse:collapse; margin-bottom:18px; font-size:12px;}
+    th, td{border:1px solid #999; padding:7px 8px; text-align:center; vertical-align:middle;}
+    th{background:#EAF1FE; font-weight:700;}
+    td.left{text-align:left;}
+    .note{font-size:11.5px; color:#555; margin:-10px 0 18px;}
+    .print-bar{text-align:center; margin-bottom:20px;}
+    .print-bar button{font-size:13px; padding:8px 18px; cursor:pointer;}
+    @media print{ .print-bar{display:none;} }
+  </style></head><body>
+  <div class="print-bar"><button onclick="window.print()">🖨 인쇄 / PDF로 저장</button></div>
+  <h1>${escapeHtml(title)}</h1>
+  <div class="sub">GIT Green IT Korea · 인증비용 / 시료구매비용 / G-MAS 공급단가 기준표</div>
+  ${bodyHtml}
+  </body></html>`;
+  const w = window.open("", "_blank");
+  if(!w){ showToast("팝업이 차단되어 새 창을 열지 못했어요. 브라우저 팝업 차단을 해제해 주세요."); return; }
+  w.document.open(); w.document.write(html); w.document.close();
+}
+
+function openSpecReport(key){
+  if(key === "parking"){
+    specWindowShell("주차관제 구성 · 인증비용/G-MAS공급단가", `
+      <table>
+        <tr><th>세부품명</th><th>제품모델명</th><th>단체표준대상</th><th>KC인증비(VAT별도)</th><th>단체표준(MAS)인증비</th><th>BF인증비</th></tr>
+        <tr><td class="left">주차주제어장치</td><td class="left">차량번호관리컴퓨터(GP-PMN210)</td><td>-</td><td>1,200,000 (2주~3주)</td><td>-</td><td>-</td></tr>
+        <tr><td class="left" rowspan="2">차량인식기(택1)</td><td class="left">차번인식기(LPR) (GM-PL25A-OI)</td><td rowspan="2">SPS-C KPSIC 0001-7337</td><td>1,300,000 (2주~3주)</td><td rowspan="2">4,300,000 (4주~6주)</td><td rowspan="2">-</td></tr>
+        <tr><td class="left">보조LPR (GM-PL25A-BI)</td><td>1,300,000 (2주~3주)</td></tr>
+        <tr><td class="left">주차안내판(택1)</td><td class="left">입구표시만차등 (4단/8단)</td><td>-</td><td>1,200,000 (2주~3주)</td><td>-</td><td>-</td></tr>
+        <tr><td class="left" rowspan="2">주차요금계산기(택1)</td><td class="left">사전요금정산기/카드전용 (GM-PC25A-BF)</td><td rowspan="2">SPS-C KPSIC 0002-7403</td><td>1,500,000 (2주~3주)</td><td rowspan="2">4,100,000 (4주~6주)</td><td>2,500,000 (2개월) · BF인증완료</td></tr>
+        <tr><td class="left">출구요금정산기/카드전용 (GM-PC25A-BC)</td><td>1,500,000 (2주~3주)</td><td>-</td></tr>
+        <tr><td class="left" rowspan="2">차량차단기(택1)</td><td class="left">단독차단기/자동차단기 (GM-PB25B-IJ)</td><td rowspan="2">SPS-C KPSIC 0003-7543</td><td>1,300,000 (2주~3주)</td><td rowspan="2">2,400,000 (4주~6주)</td><td rowspan="2">-</td></tr>
+        <tr><td class="left">통합차단기/차량번호인식/전광판일체형/LED차단바 (GM-PB25A-IJ)</td><td>1,300,000 (2주~3주)</td></tr>
+      </table>
+      <div class="note">※ 단체표준 필요성능수준 — 차량인식기: 차량번호판인식률/동작/방진/방수, 주차요금계산기: 요금계산정확도/동작/방진/방수/절연, 차량차단기: 내구성/동작/방진/방수/인식률</div>
+    `);
+  } else if(key === "access"){
+    specWindowShell("출입통제 구성 · 인증비용/시료구매비용/G-MAS공급단가", `
+      <table>
+        <tr><th colspan="6">직생 대상</th></tr>
+        <tr><th>단말기(리더기)</th><th>ACU 4채널</th><th>ACU 8채널</th><th>출입통제서버</th><th>리더기류</th><th>기타</th></tr>
+        <tr><td colspan="6" style="font-weight:700;">KC인증비(VAT별도)</td></tr>
+        <tr><td>2,700,000</td><td>1,200,000</td><td>1,200,000</td><td>-</td><td>-</td><td>-</td></tr>
+        <tr><td colspan="6" style="font-weight:700;">시료구입수량</td></tr>
+        <tr><td>1개</td><td>1개</td><td>1개</td><td>-</td><td>-</td><td>-</td></tr>
+      </table>
+      <div class="note">활용: 주차관제 사업 입찰시 반드시 직생 필요 &nbsp;|&nbsp; 제품구성방식: 주제품(리더기, ACU) + 옵션제품(출입통제서버, 리더기, 컨트롤러, 락장치, 스위치류)</div>
+    `);
+  } else if(key === "bell"){
+    specWindowShell("비상벨 구성 · 인증비용", `
+      <table>
+        <tr><th>구분</th><th>비상벨(실내형)</th><th>무선비상벨</th><th>비상벨(옥외형)</th><th>서버</th></tr>
+        <tr><td style="font-weight:700;">품명</td><td>실내형비상벨</td><td>무선비상벨</td><td>옥외형 비상벨</td><td>비상벨 서버(리눅스)</td></tr>
+        <tr><td style="font-weight:700;">규격</td><td>벨+무선중계기포함</td><td>50개단위구매</td><td>벨+게이트웨이</td><td>SW포함</td></tr>
+        <tr><td style="font-weight:700;">KC인증비(VAT별도)</td>
+          <td>1,400,000원 / RF<br>1,100,000원 / RF EMC<br>1,000,000원 / EMC</td>
+          <td>1,400,000원 / RF<br>1,100,000원 / RF EMC</td>
+          <td>1,200,000원 / EMC</td>
+          <td>1,200,000원</td>
+        </tr>
+      </table>
+    `);
+  } else if(key === "video"){
+    specWindowShell("영상감시 구성 · 인증비용/시료구매비용", `
+      <table>
+        <tr><th colspan="3">직생 미대상</th><th colspan="3">직생 대상</th></tr>
+        <tr><th>네트워크스위치</th><th>POE인젝터</th><th>POE인젝터</th><th>카메라류</th><th>서버류</th><th>기타</th></tr>
+        <tr><td class="left">EFM IP TIME POE4002</td><td class="left">IPE3001</td><td class="left">C-3002HP</td><td class="left">카메라(돔/PTZ불렛, 스피드돔)</td><td class="left">DVR</td><td class="left">전원공급장치, 네트워크스위치</td></tr>
+        <tr><td colspan="6" style="font-weight:700;">KC인증비(VAT별도) — 전 항목 1,200,000원</td></tr>
+        <tr><td>10개</td><td>10개</td><td>10개</td><td>5개</td><td>5개</td><td>5개</td></tr>
+      </table>
+      <div class="note">활용: 직생 미대상(네트워크스위치/POE인젝터) — 입찰 X, 마스등록만 필요시 &nbsp;|&nbsp; 직생 대상(카메라류/서버류/기타) — 입찰시 반드시 필요<br>
+      제품구성방식: 직생 미대상 — 주제품(네트워크스위치, POE인젝터) + 옵션제품(카메라류, 서버류, 기타) &nbsp;|&nbsp; 직생 대상 — 주제품(카메라류, 서버류, 기타) + 옵션제품(카메라류, 네트워크스위치, 서버류 등)</div>
+    `);
+  }
+}
+
+
+
+
+/* ===================== 모달 (상세/추가) ===================== */
+function renderModal(){
+  const isNew = STATE.addingNew;
+  const company = isNew ? mk(STATE.view!=="dashboard"?STATE.view:"주차") : STATE.companies.find(c=>c.id===STATE.modalId);
+  if(!company){ STATE.modalId=null; return el("div"); }
+
+  // 기존 업체는 화면상 값이 바뀌는 즉시 저장(자동저장)한다. 신규 업체는 "추가" 버튼을 눌러야 배열에 들어가므로 자동저장 대상이 아니다.
+  const autoSave = isNew ? ()=>{} : ()=>saveData();
+
+  const overlay = el("div",{class:"overlay", onclick:(e)=>{ if(e.target===overlay) closeModal(); }});
+  const modal = el("div",{class:"modal"});
+
+  modal.appendChild(el("div",{class:"modal-head"},
+    el("h2",null, isNew ? "새 업체 추가" : company.name),
+    el("button",{class:"close-x", onclick:closeModal}, "✕")
+  ));
+
+  const body = el("div",{class:"modal-body"});
+
+  // 기본정보
+  body.appendChild(el("div",{class:"section-title"},"기본 정보"));
+  const grid1 = el("div",{class:"form-grid"});
+  grid1.appendChild(field("업체명", input("text", company.name, v=>{company.name=v; autoSave();})));
+  grid1.appendChild(field("공종", selectEl(CATEGORIES, company.category, v=>{company.category=v; autoSave();})));
+  body.appendChild(grid1);
+
+  body.appendChild(el("div",{class:"field", style:"margin-top:12px;"},
+    el("label",null,"영업 레벨"),
+    levelPicker(company, autoSave)
+  ));
+
+  body.appendChild(el("div",{class:"drop-toggle"},
+    checkbox(company.dropped, v=>{ company.dropped=v; refreshDropUI(); autoSave(); }),
+    "DROP 처리 (영업 중단)"
+  ));
+  const dropNoteWrap = el("div",{id:"drop-note-wrap", style: company.dropped? "margin-top:8px;" : "display:none;margin-top:8px;"},
+    el("input",{type:"text", placeholder:"DROP 사유 (선택)", value:company.dropNote, oninput:(e)=>company.dropNote=e.target.value, onchange:autoSave, style:"width:100%;"})
+  );
+  body.appendChild(dropNoteWrap);
+  function refreshDropUI(){ dropNoteWrap.style.display = company.dropped ? "block" : "none"; }
+
+  // 진행 단계
+  body.appendChild(el("div",{class:"section-title"},"진행 단계"));
+  body.appendChild(stagePicker(company, autoSave));
+
+  // 담당자
+  body.appendChild(el("div",{class:"section-title"},"담당자 지정"));
+  const grid2 = el("div",{class:"form-grid"});
+  grid2.appendChild(field("우리 측 담당자", input("text", company.assignee, v=>company.assignee=v, "예: 김민수", autoSave)));
+  body.appendChild(grid2);
+
+  // 거래처 정보
+  body.appendChild(el("div",{class:"section-title"},"거래처 정보"));
+  const grid3 = el("div",{class:"form-grid"});
+  grid3.appendChild(el("div",{class:"field full"}, el("label",null,"주소"), input("text", company.address, v=>company.address=v, "", autoSave)));
+  grid3.appendChild(field("대표자 성함", input("text", company.ceoName, v=>company.ceoName=v, "", autoSave)));
+  grid3.appendChild(field("대표자 연락처", input("text", company.ceoPhone, v=>company.ceoPhone=v, "", autoSave)));
+  grid3.appendChild(field("실무 담당자 성함", input("text", company.managerName, v=>company.managerName=v, "", autoSave)));
+  grid3.appendChild(field("실무 담당자 연락처", input("text", company.managerPhone, v=>company.managerPhone=v, "", autoSave)));
+  body.appendChild(grid3);
+
+  // 명함
+  body.appendChild(el("div",{class:"section-title"},"명함"));
+  body.appendChild(businessCardField(company, autoSave));
+
+  // 상담 원본 데이터 / 상담보고서
+  if(!isNew && company.intake){
+    body.appendChild(el("div",{class:"section-title"},"최초 상담 기록"));
+    body.appendChild(el("div",{style:"display:flex;align-items:center;gap:10px;flex-wrap:wrap;"},
+      el("div",{style:"font-size:12.5px;color:var(--ink-soft);"}, "업체 체크리스트에서 입력된 상담 데이터가 저장되어 있어요."),
+      el("button",{class:"btn-ghost btn-sm", onclick:()=>openIntakeReport(company.intake)}, "🖨 최초 상담보고서 보기")
+    ));
+  }
+
+  // 히스토리
+  if(!isNew){
+    body.appendChild(el("div",{class:"section-title"},"진행 히스토리"));
+    const histList = el("div",{class:"history-list", id:"hist-list"});
+    renderHistory(histList, company);
+    body.appendChild(histList);
+
+    const dateInput = el("input",{type:"date"}); dateInput.value = today();
+    const textInput = el("input",{type:"text", placeholder:"오늘의 진행 내용을 기록하세요"});
+    const addBtn = el("button",{class:"btn-ghost btn-sm", onclick:()=>{
+      if(!textInput.value.trim()) return;
+      company.history.unshift({date: dateInput.value || today(), text: textInput.value.trim()});
+      textInput.value="";
+      renderHistory(histList, company);
+      autoSave();
+    }}, "기록 추가");
+    body.appendChild(el("div",{class:"history-add"}, dateInput, textInput, addBtn));
+  }
+
+  modal.appendChild(body);
+
+  const foot = el("div",{class:"modal-foot"});
+  if(!isNew){
+    foot.appendChild(el("button",{class:"btn-danger", onclick:()=>{
+      STATE.companies = STATE.companies.filter(c=>c.id!==company.id);
+      saveData(); closeModal(); showToast("업체를 삭제했어요");
+    }}, "삭제"));
+  } else {
+    foot.appendChild(el("span"));
+  }
+  const rightBtns = el("div",{style:"display:flex;gap:8px;"},
+    el("button",{class:"btn-ghost", onclick:closeModal}, "취소"),
+    el("button",{class:"btn-primary", onclick:()=>{
+      if(!company.name.trim()){ showToast("업체명을 입력해 주세요"); return; }
+      if(isNew) STATE.companies.push(company);
+      saveData(); closeModal(); showToast(isNew?"업체를 추가했어요":"저장했어요");
+    }}, isNew ? "추가" : "저장")
+  );
+  foot.appendChild(rightBtns);
+  modal.appendChild(foot);
+
+  overlay.appendChild(modal);
+  return overlay;
+
+  function closeModal(){
+    if(!isNew) saveData(); // 입력창 blur 없이 닫아도 마지막 변경사항까지 저장
+    STATE.modalId=null; STATE.addingNew=false; render();
+  }
+}
+
+function renderHistory(container, company){
+  container.innerHTML = "";
+  if(!company.history.length){
+    container.appendChild(el("div",{style:"color:var(--ink-soft);font-size:12.5px;padding:8px 0;"}, "아직 기록이 없어요."));
+    return;
+  }
+  company.history.slice().sort((a,b)=> (b.date||"").localeCompare(a.date||"")).forEach(h=>{
+    container.appendChild(el("div",{class:"history-item"},
+      el("div",{class:"history-date"}, h.date),
+      el("div",{class:"history-text"}, h.text),
+      el("button",{class:"history-del", onclick:()=>{
+        company.history = company.history.filter(x=>x!==h);
+        renderHistory(container, company);
+        saveData();
+      }}, "삭제")
+    ));
+  });
+}
+
+function businessCardField(company, autoSave){
+  const wrap = el("div");
+  const preview = el("div",{class:"card-preview-box"});
+  function renderPreview(){
+    preview.innerHTML = "";
+    if(company.businessCard){
+      preview.appendChild(el("img",{class:"card-img", src:company.businessCard}));
+      preview.appendChild(el("button",{class:"btn-ghost btn-sm", onclick:()=>{ company.businessCard=""; renderPreview(); autoSave(); }}, "명함 삭제"));
+    } else {
+      preview.appendChild(el("div",{class:"card-empty"}, "등록된 명함이 없어요"));
+    }
+  }
+  renderPreview();
+
+  const fileInput = el("input",{type:"file", accept:"image/*", capture:"environment", onchange:(e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    compressImageToDataUrl(file, (dataUrl)=>{
+      company.businessCard = dataUrl;
+      renderPreview();
+      autoSave();
+    });
+    e.target.value = "";
+  }});
+
+  wrap.appendChild(preview);
+  wrap.appendChild(el("div",{style:"margin-top:8px;"}, fileInput));
+  return wrap;
+}
+
+// 상담 체크리스트(신규 상담 입력 폼)용 명함 촬영/등록 필드 - 휴대폰에서 카메라를 바로 호출한다.
+function intakeCardField(f){
+  const wrap = el("div");
+  const preview = el("div",{class:"card-preview-box"});
+  function renderPreview(){
+    preview.innerHTML = "";
+    if(f.businessCard){
+      preview.appendChild(el("img",{class:"card-img", src:f.businessCard}));
+      preview.appendChild(el("button",{class:"btn-ghost btn-sm", onclick:()=>{ f.businessCard=""; renderPreview(); }}, "명함 삭제"));
+    } else {
+      preview.appendChild(el("div",{class:"card-empty"}, "촬영된 명함이 없어요"));
+    }
+  }
+  renderPreview();
+  const fileInput = el("input",{type:"file", accept:"image/*", capture:"environment", onchange:(e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    compressImageToDataUrl(file, (dataUrl)=>{
+      f.businessCard = dataUrl;
+      renderPreview();
+    });
+    e.target.value = "";
+  }});
+  wrap.appendChild(preview);
+  wrap.appendChild(el("div",{style:"margin-top:8px;"}, fileInput));
+  return wrap;
+}
+
+// 이미지 파일을 받아 리사이즈/압축한 뒤 base64 dataURL로 콜백에 전달
+function compressImageToDataUrl(file, cb){
+  const reader = new FileReader();
+  reader.onload = (ev)=>{
+    const img = new Image();
+    img.onload = ()=>{
+      const maxW = 480;
+      const scale = Math.min(1, maxW / img.width);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      cb(canvas.toDataURL("image/jpeg", 0.6));
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderChecklist(container, company, autoSave){
+  container.innerHTML = "";
+  const items = company.checklist || [];
+  if(!items.length){
+    container.appendChild(el("div",{style:"color:var(--ink-soft);font-size:12.5px;padding:6px 0;"}, "체크리스트 항목이 없어요."));
+    return;
+  }
+  items.forEach((item, idx)=>{
+    const textEl = el("span",{class:"ci-text"+(item.done?" done":"")}, item.text);
+    const cb = checkbox(item.done, v=>{
+      item.done = v;
+      textEl.className = "ci-text"+(v?" done":"");
+      autoSave();
+    });
+    container.appendChild(el("div",{class:"checklist-item"},
+      cb, textEl,
+      el("button",{class:"history-del", onclick:()=>{
+        items.splice(idx,1);
+        renderChecklist(container, company, autoSave);
+        autoSave();
+      }}, "삭제")
+    ));
+  });
+}
+
+function field(labelText, inputEl){
+  return el("div",{class:"field"}, el("label",null, labelText), inputEl);
+}
+function input(type, value, onChange, placeholder, onCommit){
+  const i = el("input",{type, placeholder: placeholder||""});
+  i.value = value||"";
+  i.addEventListener("input", e=>onChange(e.target.value));
+  if(onCommit) i.addEventListener("change", onCommit); // 포커스를 벗어날 때(blur) 저장
+  return i;
+}
+function selectEl(options, value, onChange){
+  const s = el("select",{onchange:(e)=>onChange(e.target.value)});
+  options.forEach(o=>{
+    const opt = el("option",{value:o}, o);
+    if(o===value) opt.setAttribute("selected","selected");
+    s.appendChild(opt);
+  });
+  return s;
+}
+function checkbox(checked, onChange){
+  const c = el("input",{type:"checkbox"});
+  c.checked = checked;
+  c.style.width="16px"; c.style.height="16px"; c.style.accentColor="var(--teal)";
+  c.addEventListener("change", e=>onChange(e.target.checked));
+  return c;
+}
+function levelPicker(company, onChange){
+  const wrap = el("div",{class:"level-picker"});
+  LEVELS.forEach(l=>{
+    const btn = el("button",{type:"button", class:"level-btn "+l+(company.level===l?" active":""), onclick:(e)=>{
+      company.level = l;
+      wrap.querySelectorAll(".level-btn").forEach(b=>b.classList.remove("active"));
+      e.currentTarget.classList.add("active");
+      if(onChange) onChange();
+    }}, l+" LEVEL");
+    wrap.appendChild(btn);
+  });
+  return wrap;
+}
+function stagePicker(company, onChange){
+  const wrap = el("div",{class:"stage-picker"});
+  STAGES.forEach(s=>{
+    const btn = el("button",{type:"button", class:"stage-btn"+(company.stage===s.id?" active":""), onclick:(e)=>{
+      company.stage = s.id;
+      wrap.querySelectorAll(".stage-btn").forEach(b=>b.classList.remove("active"));
+      e.currentTarget.classList.add("active");
+      if(onChange) onChange();
+    }}, s.label);
+    wrap.appendChild(btn);
+  });
+  return wrap;
+}
+
+/* ===================== 시작 ===================== */
+loadData();
+</script>
+</body>
+</html>
