@@ -1,6 +1,6 @@
 // MAS 영업 파이프라인 - 서비스 워커
 // 이 파일이 있어야 크롬/엣지/삼성인터넷 등에서 "설치" 메뉴가 나타납니다.
-const CACHE_NAME = "mas-crm-v4"; // 버전을 올리면 예전 캐시가 자동으로 삭제됩니다
+const CACHE_NAME = "mas-crm-v5"; // 버전을 올리면 예전 캐시가 자동으로 삭제됩니다
 const ASSETS = [
   "./mas_crm.html",
   "./manifest.json",
