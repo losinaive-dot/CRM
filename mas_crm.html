@@ -629,11 +629,13 @@ async function handleInstallClick(){
 function openInstallGuide(){
   const ua = navigator.userAgent || "";
   const isIOS = /iPhone|iPad|iPod/.test(ua);
+  const isSamsung = /SamsungBrowser/i.test(ua);
   const isAndroid = /Android/.test(ua);
+  const isChrome = /Chrome/i.test(ua) && !isSamsung;
 
   const overlay = el("div",{class:"overlay", onclick:(e)=>{ if(e.target===overlay) document.body.removeChild(overlay); }});
   const modal = el("div",{class:"modal", style:"width:380px;"});
-  modal.appendChild(el("div",{class:"modal-head"}, el("h2",null,"앱으로 설치하기"), el("button",{class:"close-x", onclick:()=>document.body.removeChild(overlay)}, "✕")));
+  modal.appendChild(el("div",{class:"modal-head"}, el("h2",null,"홈 화면에 추가하기"), el("button",{class:"close-x", onclick:()=>document.body.removeChild(overlay)}, "✕")));
 
   const body = el("div",{class:"modal-body"});
   if(isIOS){
@@ -641,10 +643,21 @@ function openInstallGuide(){
     body.appendChild(step_("① 화면 하단의 공유 버튼(⬆️ 네모 위 화살표)을 눌러주세요"));
     body.appendChild(step_("② 메뉴에서 \"홈 화면에 추가\"를 선택해주세요"));
     body.appendChild(step_("③ \"추가\"를 누르면 홈 화면에 아이콘이 생겨요"));
-  } else if(isAndroid){
-    body.appendChild(p_("설치 버튼이 아직 준비되지 않았어요. 브라우저 메뉴에서 직접 설치해주세요."));
-    body.appendChild(step_("① 오른쪽 위 점 3개 메뉴를 눌러주세요"));
+  } else if(isSamsung){
+    body.appendChild(p_("삼성 인터넷 브라우저를 사용 중이시네요. 아래 순서로 추가해주세요."));
+    body.appendChild(step_("① 화면 하단(또는 상단) 메뉴바에서 \"☰\" 또는 \"···\" 메뉴 아이콘을 눌러주세요 (주소창 옆이나 화면 맨 아래에 있어요)"));
+    body.appendChild(step_("② 메뉴 목록에서 \"현재 페이지 추가\" 또는 \"홈 화면에 추가\"를 선택해주세요"));
+    body.appendChild(step_("③ \"홈 화면\"을 선택하고 \"추가\"를 누르면 아이콘이 생겨요"));
+    body.appendChild(p_("※ 메뉴 이름이 잘 안 보이면, 아이콘들 중 네모 안에 + 표시가 있는 아이콘을 찾아보세요."));
+  } else if(isChrome){
+    body.appendChild(p_("크롬 브라우저를 사용 중이시네요. 아래 순서로 설치해주세요."));
+    body.appendChild(step_("① 오른쪽 위 점 3개(⋮) 메뉴를 눌러주세요"));
     body.appendChild(step_("② \"앱 설치\" 또는 \"홈 화면에 추가\"를 선택해주세요"));
+    body.appendChild(step_("③ \"설치\"를 누르면 홈 화면에 아이콘이 생겨요"));
+  } else if(isAndroid){
+    body.appendChild(p_("사용 중인 브라우저의 메뉴 버튼(점 3개 또는 ☰)을 눌러서 아래 문구를 찾아주세요."));
+    body.appendChild(step_("\"홈 화면에 추가\" / \"앱 설치\" / \"페이지 추가\" 중 하나가 보일 거예요"));
+    body.appendChild(step_("선택 후 \"추가\" 또는 \"설치\"를 누르면 완료돼요"));
   } else {
     body.appendChild(p_("설치 버튼이 아직 준비되지 않았어요. 아래 방법으로 직접 설치해주세요."));
     body.appendChild(step_("① 주소창 오른쪽 끝의 설치 아이콘(⊕)을 클릭해주세요"));
@@ -721,11 +734,12 @@ function renderSidebar(){
   const actions = el("div",{class:"sidebar-actions"});
   if(STATE.isAdmin){
     actions.appendChild(el("div",{class:"admin-badge"}, "🔓 관리자 모드"));
+    actions.appendChild(el("button",{class:"sidebar-btn", onclick:()=>{STATE.view="dbimport"; render();}}, "📥 DB 가져오기 (붙여넣기 동기화)"));
     actions.appendChild(el("button",{class:"sidebar-btn", onclick:exportReport}, "⬇ 전체 보고서 다운로드 (CSV)"));
     actions.appendChild(el("button",{class:"sidebar-btn", onclick:exportBackup}, "⬇ 데이터 백업 (JSON)"));
     actions.appendChild(el("button",{class:"sidebar-btn", onclick:()=>fileInput.click()}, "⬆ 백업 파일로 복원"));
     actions.appendChild(fileInput);
-    actions.appendChild(el("button",{class:"sidebar-btn lock-btn", onclick:()=>{ STATE.isAdmin=false; render(); showToast("관리자 모드를 종료했어요"); }}, "🔒 관리자 모드 종료"));
+    actions.appendChild(el("button",{class:"sidebar-btn lock-btn", onclick:()=>{ STATE.isAdmin=false; if(STATE.view==="dbimport") STATE.view="dashboard"; render(); showToast("관리자 모드를 종료했어요"); }}, "🔒 관리자 모드 종료"));
   } else {
     actions.appendChild(el("button",{class:"sidebar-btn", onclick:openAdminLogin}, "🔒 관리자 모드 잠금해제"));
   }
@@ -790,6 +804,8 @@ function renderMain(){
     main.appendChild(renderDashboard());
   } else if(STATE.view === "checklist"){
     main.appendChild(renderIntakeChecklist());
+  } else if(STATE.view === "dbimport"){
+    main.appendChild(STATE.isAdmin ? renderDbImport() : renderDashboard());
   } else {
     main.appendChild(renderCategoryView(STATE.view));
   }
@@ -1431,6 +1447,132 @@ function openSpecReport(key){
 }
 
 
+
+
+/* ===================== DB 가져오기 (구글시트 붙여넣기 동기화) ===================== */
+// DB_MAS의 data1 시트 컬럼 순서(업체명 ~ MAS등록 요청사항, No.열 제외) 기준 인덱스
+const DBIMPORT_COLS = [
+  "업체명","할당지역","업체주소","대표자명","대표번호","사업자번호","법인등록번호","업종","주요내용","주요사업",
+  "자본금","사원수","설립일","매출액","영업이익","당기순이익","홈페이지","담당자명","직위","전화번호1","전화번호2",
+  "이메일","GS인증명","데모룸설치","서류접수일","인증서발급일","계약금액","진행","GIT영업담당자","GIT-업체계약일","MAS등록요청사항"
+];
+
+function normalizeCoName(name){
+  if(!name) return "";
+  let n = String(name);
+  n = n.split("/")[0];
+  n = n.replace(/\(주\)|㈜|주식회사|\(유\)/g, "");
+  n = n.replace(/\([^)]*\)/g, "");
+  n = n.replace(/\s+/g, "");
+  return n.trim();
+}
+function cleanCoName(name){
+  return String(name||"").replace(/\(주\)|㈜|주식회사/g, "").trim() || name;
+}
+function parsePastedGrid(text){
+  return text.split(/\r?\n/).filter(l=>l.trim()!=="").map(l=>l.split("\t"));
+}
+
+function renderDbImport(){
+  const wrap = el("div");
+  wrap.appendChild(el("div",{class:"topbar"},
+    el("div",null, el("h1",null,"DB 가져오기"), el("div",{class:"sub"},"구글시트에서 복사한 업체 데이터를 붙여넣어 현재 목록과 자동으로 비교·병합합니다"))
+  ));
+
+  const card = el("div",{class:"intake-card"});
+  card.appendChild(el("div",{class:"intake-sec"},
+    el("div",{class:"intake-sec-title"}, el("span",{class:"mark"},"■"), "1. 붙여넣을 범위 안내"),
+    el("div",{style:"font-size:12.5px;color:var(--ink-soft);line-height:1.7;"},
+      "구글시트에서 ",
+      el("b",null,"헤더(제목) 행은 제외"), "하고 첫 데이터 행부터, ",
+      el("b",null,"\"업체명\" 열부터 \"MAS등록 요청사항\" 열까지"), " 범위를 선택해서 복사(Ctrl+C)한 뒤, 아래 칸에 붙여넣어주세요(Ctrl+V). (\"No.\" 번호 열은 포함하지 마세요)"
+    )
+  ));
+
+  const targetSec = el("div",{class:"intake-sec"});
+  targetSec.appendChild(el("div",{class:"intake-sec-title"}, el("span",{class:"mark"},"■"), "2. 적용할 공종"));
+  const catSelect = el("select",null);
+  CATEGORIES.filter(c=>c!=="공통").forEach(c=>{
+    const opt = el("option",{value:c}, c);
+    if(c==="GS인증") opt.setAttribute("selected","selected");
+    catSelect.appendChild(opt);
+  });
+  targetSec.appendChild(catSelect);
+  card.appendChild(targetSec);
+
+  const pasteSec = el("div",{class:"intake-sec"});
+  pasteSec.appendChild(el("div",{class:"intake-sec-title"}, el("span",{class:"mark"},"■"), "3. 데이터 붙여넣기"));
+  const textarea = el("textarea",{rows:"10", placeholder:"여기에 구글시트에서 복사한 내용을 붙여넣으세요 (Ctrl+V)", style:"width:100%;font-family:monospace;font-size:11.5px;"});
+  pasteSec.appendChild(textarea);
+  card.appendChild(pasteSec);
+
+  const resultBox = el("div",{style:"margin-top:14px;font-size:12.5px;color:var(--ink-soft);"});
+
+  const actions = el("div",{class:"intake-actions"},
+    el("button",{class:"btn-ghost", onclick:()=>{
+      const rows = parsePastedGrid(textarea.value);
+      const valid = rows.filter(r=>(r[0]||"").trim());
+      resultBox.textContent = "붙여넣은 데이터: 총 "+rows.length+"행, 업체명이 있는 유효한 행 "+valid.length+"건";
+    }}, "미리 확인"),
+    el("button",{class:"btn-primary", onclick:()=>{
+      const rows = parsePastedGrid(textarea.value).filter(r=>(r[0]||"").trim());
+      if(rows.length===0){ showToast("붙여넣은 데이터가 없어요"); return; }
+      if(!window.confirm(rows.length+"건의 데이터를 \""+catSelect.value+"\" 공종에 병합하시겠어요?\n같은 이름의 업체는 정보가 갱신되고, 새 이름은 신규 업체로 추가됩니다.")) return;
+      const result = runDbImport(rows, catSelect.value);
+      resultBox.textContent = "완료 — 기존 업체 갱신: "+result.matched+"건, 신규 추가: "+result.added+"건";
+      showToast("가져오기 완료: 갱신 "+result.matched+"건 · 신규 "+result.added+"건");
+    }}, "🔄 가져오기 실행")
+  );
+  card.appendChild(actions);
+  card.appendChild(resultBox);
+
+  wrap.appendChild(card);
+  return wrap;
+}
+
+// 붙여넣은 데이터를 실제 STATE.companies와 병합(이름 일치 시 갱신, 없으면 신규 추가)한 뒤 저장한다.
+function runDbImport(rows, targetCategory){
+  let matched = 0, added = 0;
+  rows.forEach(cols=>{
+    const rawName = (cols[0]||"").trim();
+    if(!rawName) return;
+    const norm = normalizeCoName(rawName);
+    if(!norm) return;
+
+    let comp = STATE.companies.find(c=> c.category===targetCategory && normalizeCoName(c.name)===norm);
+    if(!comp){
+      comp = mk(targetCategory, cleanCoName(rawName), "B", "consult", false, "");
+      STATE.companies.push(comp);
+      added++;
+    } else {
+      matched++;
+    }
+
+    if(cols[2]) comp.address = cols[2].trim();
+    if(cols[3]) comp.ceoName = cols[3].trim();
+    if(cols[4]) comp.ceoPhone = cols[4].trim();
+    if(cols[17]) comp.managerName = cols[17].trim();
+    const phone = (cols[19]||"").trim() || (cols[20]||"").trim();
+    if(phone) comp.managerPhone = phone;
+    if(cols[21]) comp.managerEmail = cols[21].trim();
+    if(cols[28]) comp.assignee = cols[28].trim();
+
+    const progress = (cols[27]||"").trim();
+    if(progress){
+      comp.history = comp.history || [];
+      const already = comp.history.some(h=>h.text === "[DB_MAS 가져오기] "+progress);
+      if(!already) comp.history.unshift({date: today(), text: "[DB_MAS 가져오기] "+progress});
+    }
+    const masRequest = (cols[30]||"").trim();
+    if(masRequest){
+      comp.history = comp.history || [];
+      const tag = "[MAS등록 요청사항] "+masRequest;
+      if(!comp.history.some(h=>h.text===tag)) comp.history.unshift({date: today(), text: tag});
+    }
+  });
+  saveData();
+  return { matched, added };
+}
 
 
 /* ===================== 모달 (상세/추가) ===================== */
