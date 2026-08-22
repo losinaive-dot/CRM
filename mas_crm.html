@@ -389,7 +389,7 @@ function mk(category, name, level, stage, dropped, dropNote){
     history: dropped ? [{date: today(), text:"DROP 처리됨"+(dropNote?(" - "+dropNote):"")}] : [],
   };
 }
-function today(){ return new Date().toISOString().slice(0,10); }
+function today(){ return ymd(new Date()); }
 
 function buildSeed(){
   const list = [];
@@ -447,7 +447,7 @@ const ADMIN_PASSWORD = "git2026";
 
 let STATE = { companies: [], view: "dashboard", filterLevel:"", filterStage:"", search:"", modalId:null, addingNew:false, intakeForm: freshIntakeForm(),
   dashAssigneeQuery:"", dashCompanyQuery:"", updateWeekKey:"", updateAssignee:"", isAdmin:false, stageFilter:null,
-  calendarMode:"month", calendarDate:new Date().toISOString().slice(0,10),
+  calendarMode:"month", calendarDate:ymd(new Date()),
   reportMode:"week", reportWeekKey:"", reportMonthKey:"" };
 
 function freshIntakeForm(){
@@ -1105,7 +1105,7 @@ function computeWeekOptions(historyList){
     const d = new Date(h.date+"T00:00:00");
     if(isNaN(d.getTime())) return;
     const mon = getMonday(d);
-    const key = mon.toISOString().slice(0,10);
+    const key = ymd(mon);
     if(!map.has(key)) map.set(key, {key, start:mon});
   });
   return Array.from(map.values()).sort((a,b)=> b.start - a.start);
@@ -1705,9 +1705,9 @@ function renderCalendar(){
         el("button",{class:"seg-btn"+(STATE.calendarMode==="week"?" active":""), onclick:()=>{STATE.calendarMode="week"; render();}}, "주간"),
         el("button",{class:"seg-btn"+(STATE.calendarMode==="month"?" active":""), onclick:()=>{STATE.calendarMode="month"; render();}}, "월간"),
       ),
-      el("button",{class:"btn-ghost btn-sm", onclick:()=>{ STATE.calendarDate = shiftDate(anchor, STATE.calendarMode==="week"?-7:-30, STATE.calendarMode).toISOString().slice(0,10); render(); }}, "◀"),
-      el("button",{class:"btn-ghost btn-sm", onclick:()=>{ STATE.calendarDate = new Date().toISOString().slice(0,10); render(); }}, "오늘"),
-      el("button",{class:"btn-ghost btn-sm", onclick:()=>{ STATE.calendarDate = shiftDate(anchor, STATE.calendarMode==="week"?7:30, STATE.calendarMode).toISOString().slice(0,10); render(); }}, "▶"),
+      el("button",{class:"btn-ghost btn-sm", onclick:()=>{ STATE.calendarDate = ymd(shiftDate(anchor, STATE.calendarMode==="week"?-7:-30, STATE.calendarMode)); render(); }}, "◀"),
+      el("button",{class:"btn-ghost btn-sm", onclick:()=>{ STATE.calendarDate = ymd(new Date()); render(); }}, "오늘"),
+      el("button",{class:"btn-ghost btn-sm", onclick:()=>{ STATE.calendarDate = ymd(shiftDate(anchor, STATE.calendarMode==="week"?7:30, STATE.calendarMode)); render(); }}, "▶"),
     )
   ));
 
@@ -1728,7 +1728,13 @@ function shiftDate(d, amount, mode){
   else { nd.setDate(nd.getDate()+amount); }
   return nd;
 }
-function ymd(d){ return d.toISOString().slice(0,10); }
+// 로컬 타임존 기준으로 YYYY-MM-DD 문자열을 만든다. (toISOString은 UTC로 변환되어 한국(UTC+9)에서 날짜가 하루 밀리는 버그가 있어 사용하지 않음)
+function ymd(d){
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const day = String(d.getDate()).padStart(2,"0");
+  return y+"-"+m+"-"+day;
+}
 function calEntryLine(h){
   const txt = h.text.length>10 ? h.text.slice(0,10)+"…" : h.text;
   return el("div",{class:"cal-entry", title:h.name+" · "+h.category+" — "+h.text, onclick:(e)=>{ e.stopPropagation(); STATE.modalId=h.companyId; render(); }},
@@ -1872,21 +1878,72 @@ function renderReport(){
   return wrap;
 }
 
-function buildSummaryTable(){
-  const table = el("table",{class:"pipeline-table"});
-  table.appendChild(el("tr",null, el("th",null,"공종"), el("th",null,"전체"), el("th",null,"A"), el("th",null,"B"), el("th",null,"C"), el("th",null,"DROP")));
-  CATEGORIES.forEach(cat=>{
+// 특정 오프셋 개월의 시작일/종료일/라벨 계산 (0=이번달, -1=지난달)
+function monthRange(offsetMonths){
+  const now = new Date();
+  const d = new Date(now.getFullYear(), now.getMonth()+offsetMonths, 1);
+  return {
+    start: new Date(d.getFullYear(), d.getMonth(), 1),
+    end: new Date(d.getFullYear(), d.getMonth()+1, 0),
+    label: d.getFullYear()+"년 "+(d.getMonth()+1)+"월"
+  };
+}
+function inRange(dateStr, start, end){
+  if(!dateStr) return false;
+  const d = new Date(dateStr+"T00:00:00");
+  return !isNaN(d.getTime()) && d>=start && d<=end;
+}
+// 공종별로 전월/금월의 "신규 등록 업체 수"와 "업무 처리 건수"를 비교한다.
+// (총 보유 업체수는 과거 시점 스냅샷이 없어 정확한 재현이 불가능하므로, 실제 기록된 히스토리 날짜를 기준으로
+//  신규업체 등록 시점과 업무 처리 건수를 집계하는 방식으로 월별 비교를 제공한다.)
+function buildMonthComparisonData(){
+  const cur = monthRange(0), prev = monthRange(-1);
+  const rows = CATEGORIES.map(cat=>{
     const items = STATE.companies.filter(c=>c.category===cat);
-    const active = items.filter(c=>!c.dropped);
-    const byLevel = {A:0,B:0,C:0};
-    active.forEach(c=>byLevel[c.level]++);
+    let curNew=0, prevNew=0, curAct=0, prevAct=0;
+    items.forEach(c=>{
+      const hist = c.history||[];
+      let earliest = null;
+      hist.forEach(h=>{
+        if(h.date && (!earliest || h.date<earliest)) earliest = h.date;
+        if(inRange(h.date, cur.start, cur.end)) curAct++;
+        if(inRange(h.date, prev.start, prev.end)) prevAct++;
+      });
+      if(earliest && inRange(earliest, cur.start, cur.end)) curNew++;
+      if(earliest && inRange(earliest, prev.start, prev.end)) prevNew++;
+    });
+    return { cat, curNew, prevNew, curAct, prevAct };
+  });
+  return { curLabel: cur.label, prevLabel: prev.label, rows };
+}
+function diffBadge(n){
+  if(n>0) return el("span",{style:"color:#0F766E;font-weight:800;"}, "▲"+n);
+  if(n<0) return el("span",{style:"color:#DC2626;font-weight:800;"}, "▼"+Math.abs(n));
+  return el("span",{style:"color:var(--ink-soft);"}, "-");
+}
+function diffText(n){
+  if(n>0) return "▲"+n;
+  if(n<0) return "▼"+Math.abs(n);
+  return "-";
+}
+
+function buildSummaryTable(){
+  const { curLabel, prevLabel, rows } = buildMonthComparisonData();
+  const table = el("table",{class:"pipeline-table"});
+  table.appendChild(el("tr",null,
+    el("th",null,"공종"),
+    el("th",null,prevLabel+" 신규"), el("th",null,curLabel+" 신규"), el("th",null,"증감"),
+    el("th",null,prevLabel+" 업무건수"), el("th",null,curLabel+" 업무건수"), el("th",null,"증감")
+  ));
+  rows.forEach(r=>{
     table.appendChild(el("tr",null,
-      el("td",{class:"company-name-cell"}, cat),
-      el("td",null, String(items.length)),
-      el("td",null, String(byLevel.A)),
-      el("td",null, String(byLevel.B)),
-      el("td",null, String(byLevel.C)),
-      el("td",null, String(items.filter(c=>c.dropped).length)),
+      el("td",{class:"company-name-cell"}, r.cat),
+      el("td",null, String(r.prevNew)),
+      el("td",null, String(r.curNew)),
+      el("td",null, diffBadge(r.curNew-r.prevNew)),
+      el("td",null, String(r.prevAct)),
+      el("td",null, String(r.curAct)),
+      el("td",null, diffBadge(r.curAct-r.prevAct)),
     ));
   });
   return table;
@@ -1923,13 +1980,10 @@ function buildDayTable(items){
 }
 
 function openReportPrintView(periodLabel, dayGroups){
-  const summaryRows = CATEGORIES.map(cat=>{
-    const items = STATE.companies.filter(c=>c.category===cat);
-    const active = items.filter(c=>!c.dropped);
-    const byLevel = {A:0,B:0,C:0};
-    active.forEach(c=>byLevel[c.level]++);
-    return "<tr><td class='left'>"+cat+"</td><td>"+items.length+"</td><td>"+byLevel.A+"</td><td>"+byLevel.B+"</td><td>"+byLevel.C+"</td><td>"+items.filter(c=>c.dropped).length+"</td></tr>";
-  }).join("");
+  const { curLabel, prevLabel, rows } = buildMonthComparisonData();
+  const summaryRows = rows.map(r=>
+    "<tr><td class='left'>"+r.cat+"</td><td>"+r.prevNew+"</td><td>"+r.curNew+"</td><td>"+diffText(r.curNew-r.prevNew)+"</td><td>"+r.prevAct+"</td><td>"+r.curAct+"</td><td>"+diffText(r.curAct-r.prevAct)+"</td></tr>"
+  ).join("");
 
   const dayHtml = dayGroups.filter(g=>g.items.length>0).map(g=>{
     const rows = g.items.map(h=>
@@ -1939,21 +1993,18 @@ function openReportPrintView(periodLabel, dayGroups){
   }).join("");
 
   specWindowShell("주간/월간 보고서 · "+periodLabel, `
-    <h2 style="font-size:14px;margin:0 0 8px;">공종별 현황 요약</h2>
-    <table><tr><th>공종</th><th>전체</th><th>A</th><th>B</th><th>C</th><th>DROP</th></tr>${summaryRows}</table>
+    <h2 style="font-size:14px;margin:0 0 8px;">공종별 현황 요약 (전월·금월 비교)</h2>
+    <table><tr><th>공종</th><th>${prevLabel} 신규</th><th>${curLabel} 신규</th><th>증감</th><th>${prevLabel} 업무건수</th><th>${curLabel} 업무건수</th><th>증감</th></tr>${summaryRows}</table>
     <h2 style="font-size:14px;margin:18px 0 8px;">일별 업무 내역</h2>
     ${dayHtml || "<div class='note'>해당 기간에 기록된 업무 내용이 없어요.</div>"}
   `, "GIT Green IT Korea · MAS 영업 파이프라인 업무 보고서");
 }
 
 function exportReportExcel(periodLabel, dayGroups){
-  const rows = [["구분","공종","전체","A","B","C","DROP"]];
-  CATEGORIES.forEach(cat=>{
-    const items = STATE.companies.filter(c=>c.category===cat);
-    const active = items.filter(c=>!c.dropped);
-    const byLevel = {A:0,B:0,C:0};
-    active.forEach(c=>byLevel[c.level]++);
-    rows.push(["요약", cat, items.length, byLevel.A, byLevel.B, byLevel.C, items.filter(c=>c.dropped).length]);
+  const { curLabel, prevLabel, rows: cmpRows } = buildMonthComparisonData();
+  const rows = [["구분","공종",prevLabel+" 신규",curLabel+" 신규","신규 증감",prevLabel+" 업무건수",curLabel+" 업무건수","업무건수 증감"]];
+  cmpRows.forEach(r=>{
+    rows.push(["요약", r.cat, r.prevNew, r.curNew, diffText(r.curNew-r.prevNew), r.prevAct, r.curAct, diffText(r.curAct-r.prevAct)]);
   });
   rows.push([]);
   rows.push(["날짜","업체명","공종","레벨","진행단계","담당자","진행 내용"]);
