@@ -126,6 +126,9 @@
   table.pipeline-table tr:last-child td{border-bottom:none;}
   table.pipeline-table tbody tr{cursor:pointer;}
   table.pipeline-table tbody tr:hover{background:#FAFBFA;}
+  table.pipeline-table th.stage-th{cursor:pointer; user-select:none;}
+  table.pipeline-table th.stage-th:hover{background:var(--teal-soft); color:var(--teal);}
+  .stage-filter-head{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
 
   .level-tag{display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:20px; font-weight:800; font-size:11.5px;}
   .level-tag.A{background:var(--a-bg); color:var(--a-color);}
@@ -410,7 +413,7 @@ const SHEETS_URL = "https://script.google.com/macros/s/AKfycbwYVvz5-xQnBomVicSTC
 const ADMIN_PASSWORD = "git2026";
 
 let STATE = { companies: [], view: "dashboard", filterLevel:"", filterStage:"", search:"", modalId:null, addingNew:false, intakeForm: freshIntakeForm(),
-  dashAssigneeQuery:"", dashCompanyQuery:"", updateWeekKey:"", updateAssignee:"", isAdmin:false };
+  dashAssigneeQuery:"", dashCompanyQuery:"", updateWeekKey:"", updateAssignee:"", isAdmin:false, stageFilter:null };
 
 function freshIntakeForm(){
   return {
@@ -877,8 +880,8 @@ function renderDashboard(){
   const table = el("table",{class:"pipeline-table"});
   table.appendChild(el("tr",null,
     el("th",null,"공종"),
-    ...STAGES.map(s=>el("th",null,s.label)),
-    el("th",null,"DROP")
+    ...STAGES.map(s=>el("th",{class:"stage-th", onclick:()=>{ STATE.stageFilter={type:"stage", id:s.id, label:s.label}; render(); }}, s.label)),
+    el("th",{class:"stage-th", onclick:()=>{ STATE.stageFilter={type:"dropped", id:"dropped", label:"DROP"}; render(); }}, "DROP")
   ));
   CATEGORIES.forEach(cat=>{
     const items = STATE.companies.filter(c=>c.category===cat);
@@ -890,8 +893,12 @@ function renderDashboard(){
     row.appendChild(el("td",null, String(items.filter(c=>c.dropped).length) || "-"));
     table.appendChild(row);
   });
-  const tblWrap = el("div",null, el("div",{class:"section-title"},"단계별 전체 현황"), table);
+  const tblWrap = el("div",null, el("div",{class:"section-title"},"단계별 전체 현황 (제목을 클릭하면 해당 단계 업체만 볼 수 있어요)"), table);
   wrap.appendChild(tblWrap);
+
+  if(STATE.stageFilter){
+    wrap.appendChild(buildStageFilterResults());
+  }
 
   // 날짜별 업데이트 내역 (주간 선택 + 영업자 선택 · 3열)
   const allHistory = [];
@@ -968,6 +975,40 @@ function distinctAssignees(){
   const set = new Set();
   STATE.companies.forEach(c=>{ if(c.assignee && c.assignee.trim()) set.add(c.assignee.trim()); });
   return Array.from(set).sort((a,b)=>a.localeCompare(b,"ko"));
+}
+
+function buildStageFilterResults(){
+  const f = STATE.stageFilter;
+  const results = STATE.companies.filter(c=>{
+    if(f.type==="dropped") return c.dropped;
+    return !c.dropped && c.stage===f.id;
+  });
+
+  const wrap = el("div",{style:"margin-top:16px;"});
+  wrap.appendChild(el("div",{class:"stage-filter-head"},
+    el("div",{class:"section-title", style:"margin:0;"}, "\""+f.label+"\" 단계 업체 ("+results.length+"건)"),
+    el("button",{class:"btn-ghost btn-sm", onclick:()=>{ STATE.stageFilter=null; render(); }}, "✕ 필터 해제")
+  ));
+
+  if(results.length===0){
+    wrap.appendChild(el("div",{class:"empty-state", style:"margin-top:10px;"}, el("b",null,"해당 단계의 업체가 없어요.")));
+    return wrap;
+  }
+
+  const table = el("table",{class:"pipeline-table", style:"margin-top:10px;"});
+  table.appendChild(el("tr",null, el("th",null,"업체명"), el("th",null,"공종"), el("th",null,"레벨"), el("th",null,"진행 단계"), el("th",null,"담당자"), el("th",null,"실무 연락처")));
+  results.forEach(c=>{
+    table.appendChild(el("tr",{onclick:()=>{ STATE.modalId=c.id; render(); }},
+      el("td",{class:"company-name-cell"}, c.name),
+      el("td",null, c.category),
+      el("td",null, el("span",{class:"level-tag "+(c.dropped?"DROP":c.level)}, c.dropped?"DROP":c.level)),
+      el("td",null, stageProgress(c)),
+      el("td",null, c.assignee ? el("span",{class:"assignee-chip"}, c.assignee) : el("span",{class:"assignee-chip empty"}, "미지정")),
+      el("td",null, c.managerName ? (c.managerName+(c.managerPhone?" · "+c.managerPhone:"")) : "-")
+    ));
+  });
+  wrap.appendChild(table);
+  return wrap;
 }
 
 function buildDashSearchResults(){
