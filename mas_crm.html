@@ -236,6 +236,31 @@
   .checklist-add{display:flex; gap:8px; margin-top:10px;}
   .checklist-add input{flex:1;}
 
+  /* 달력 */
+  .cal-toolbar{display:flex; align-items:center; gap:8px;}
+  .seg{display:flex; border:1px solid var(--line); border-radius:8px; overflow:hidden;}
+  .seg-btn{padding:7px 14px; font-size:12.5px; font-weight:700; background:#fff; color:var(--ink-soft); border-right:1px solid var(--line);}
+  .seg-btn:last-child{border-right:none;}
+  .seg-btn.active{background:var(--teal); color:#fff;}
+  .cal-period-label{font-size:15px; font-weight:800; margin:14px 0 10px;}
+  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px;}
+  .cal-grid-week{grid-template-columns:repeat(7,1fr);}
+  .cal-dow{text-align:center; font-size:11.5px; font-weight:800; color:var(--ink-soft); padding:4px 0;}
+  .cal-cell{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:6px; min-height:88px;}
+  .cal-cell.dim{background:#FAFAF9; color:#B5BBC2;}
+  .cal-cell.dim .cal-daynum{color:#C4C9CE;}
+  .cal-cell.today{border-color:var(--teal); box-shadow:0 0 0 2px var(--teal-soft);}
+  .cal-cell-week{min-height:160px;}
+  .cal-daynum{font-size:12px; font-weight:800; margin-bottom:4px;}
+  .cal-entry{font-size:10.5px; line-height:1.5; padding:2px 4px; border-radius:4px; background:var(--teal-soft); color:var(--ink); margin-bottom:2px; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .cal-entry:hover{background:#D8EEEB;}
+  .cal-entry-co{font-weight:800;}
+  .cal-more{font-size:10px; color:var(--ink-soft); padding:1px 4px;}
+
+  /* 보고서 */
+  .report-controls{display:flex; gap:10px; flex-wrap:wrap;}
+  .report-day-label{font-size:13px; font-weight:800; color:var(--steel); margin:14px 0 6px;}
+
   /* 상담 체크리스트 폼 */
   .intake-card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:20px 22px; max-width:760px;}
   .intake-sec{margin-top:22px; padding-top:16px; border-top:1px solid var(--line);}
@@ -303,6 +328,14 @@
     .stat-card .num{font-size:21px;}
 
     table.pipeline-table{display:block; overflow-x:auto; -webkit-overflow-scrolling:touch;}
+    .cal-grid{grid-template-columns:repeat(7,minmax(38px,1fr)); gap:3px;}
+    .cal-cell{min-height:64px; padding:3px;}
+    .cal-cell-week{min-height:100px;}
+    .cal-entry{font-size:9px;}
+    .cal-dow{font-size:10px;}
+    .cal-toolbar{width:100%; flex-wrap:wrap;}
+    .report-controls{width:100%;}
+    .report-controls select{flex:1; min-width:120px;}
     table.pipeline-table th, table.pipeline-table td{white-space:nowrap;}
 
     .update-columns{column-count:1;}
@@ -413,7 +446,9 @@ const SHEETS_URL = "https://script.google.com/macros/s/AKfycbwYVvz5-xQnBomVicSTC
 const ADMIN_PASSWORD = "git2026";
 
 let STATE = { companies: [], view: "dashboard", filterLevel:"", filterStage:"", search:"", modalId:null, addingNew:false, intakeForm: freshIntakeForm(),
-  dashAssigneeQuery:"", dashCompanyQuery:"", updateWeekKey:"", updateAssignee:"", isAdmin:false, stageFilter:null };
+  dashAssigneeQuery:"", dashCompanyQuery:"", updateWeekKey:"", updateAssignee:"", isAdmin:false, stageFilter:null,
+  calendarMode:"month", calendarDate:new Date().toISOString().slice(0,10),
+  reportMode:"week", reportWeekKey:"", reportMonthKey:"" };
 
 function freshIntakeForm(){
   return {
@@ -714,6 +749,12 @@ function renderSidebar(){
   const checklistNav = el("div", {class:"nav-item"+(STATE.view==="checklist"?" active":""), onclick:()=>{STATE.view="checklist"; render();}}, "📋 업체 체크리스트");
   sb.appendChild(checklistNav);
 
+  const calendarNav = el("div", {class:"nav-item"+(STATE.view==="calendar"?" active":""), onclick:()=>{STATE.view="calendar"; render();}}, "📅 달력");
+  sb.appendChild(calendarNav);
+
+  const reportNav = el("div", {class:"nav-item"+(STATE.view==="report"?" active":""), onclick:()=>{STATE.view="report"; render();}}, "📊 주간/월간 보고서");
+  sb.appendChild(reportNav);
+
   const specBtns = el("div",{class:"spec-nav"},
     el("div",{class:"spec-nav-item", onclick:()=>openSpecReport("parking")}, "🅿️ 주차관제 구성"),
     el("div",{class:"spec-nav-item", onclick:()=>openSpecReport("access")}, "🚪 출입통제 구성"),
@@ -812,6 +853,10 @@ function renderMain(){
     main.appendChild(renderIntakeChecklist());
   } else if(STATE.view === "dbimport"){
     main.appendChild(STATE.isAdmin ? renderDbImport() : renderDashboard());
+  } else if(STATE.view === "calendar"){
+    main.appendChild(renderCalendar());
+  } else if(STATE.view === "report"){
+    main.appendChild(renderReport());
   } else {
     main.appendChild(renderCategoryView(STATE.view));
   }
@@ -1418,7 +1463,7 @@ function escapeHtml(s){
 }
 
 /* ===================== 공종별 등록/인증 단가표 (새창) ===================== */
-function specWindowShell(title, bodyHtml){
+function specWindowShell(title, bodyHtml, subtitle){
   const html = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8">
   <title>${escapeHtml(title)}</title>
   <style>
@@ -1430,13 +1475,14 @@ function specWindowShell(title, bodyHtml){
     th{background:#EAF1FE; font-weight:700;}
     td.left{text-align:left;}
     .note{font-size:11.5px; color:#555; margin:-10px 0 18px;}
+    .daylabel{font-size:13px; font-weight:800; margin:16px 0 6px; padding-bottom:4px; border-bottom:2px solid #333;}
     .print-bar{text-align:center; margin-bottom:20px;}
     .print-bar button{font-size:13px; padding:8px 18px; cursor:pointer;}
     @media print{ .print-bar{display:none;} }
   </style></head><body>
   <div class="print-bar"><button onclick="window.print()">🖨 인쇄 / PDF로 저장</button></div>
   <h1>${escapeHtml(title)}</h1>
-  <div class="sub">GIT Green IT Korea · 인증비용 / 시료구매비용 / G-MAS 공급단가 기준표</div>
+  <div class="sub">${escapeHtml(subtitle || "GIT Green IT Korea")}</div>
   ${bodyHtml}
   </body></html>`;
   const w = window.open("", "_blank");
@@ -1459,7 +1505,7 @@ function openSpecReport(key){
         <tr><td class="left">통합차단기/차량번호인식/전광판일체형/LED차단바 (GM-PB25A-IJ)</td><td>1,300,000 (2주~3주)</td></tr>
       </table>
       <div class="note">※ 단체표준 필요성능수준 — 차량인식기: 차량번호판인식률/동작/방진/방수, 주차요금계산기: 요금계산정확도/동작/방진/방수/절연, 차량차단기: 내구성/동작/방진/방수/인식률</div>
-    `);
+    `, "GIT Green IT Korea · 인증비용 / 시료구매비용 / G-MAS 공급단가 기준표");
   } else if(key === "access"){
     specWindowShell("출입통제 구성 · 인증비용/시료구매비용/G-MAS공급단가", `
       <table>
@@ -1471,7 +1517,7 @@ function openSpecReport(key){
         <tr><td>1개</td><td>1개</td><td>1개</td><td>-</td><td>-</td><td>-</td></tr>
       </table>
       <div class="note">활용: 주차관제 사업 입찰시 반드시 직생 필요 &nbsp;|&nbsp; 제품구성방식: 주제품(리더기, ACU) + 옵션제품(출입통제서버, 리더기, 컨트롤러, 락장치, 스위치류)</div>
-    `);
+    `, "GIT Green IT Korea · 인증비용 / 시료구매비용 / G-MAS 공급단가 기준표");
   } else if(key === "bell"){
     specWindowShell("비상벨 구성 · 인증비용", `
       <table>
@@ -1485,7 +1531,7 @@ function openSpecReport(key){
           <td>1,200,000원</td>
         </tr>
       </table>
-    `);
+    `, "GIT Green IT Korea · 인증비용 / 시료구매비용 / G-MAS 공급단가 기준표");
   } else if(key === "video"){
     specWindowShell("영상감시 구성 · 인증비용/시료구매비용", `
       <table>
@@ -1497,7 +1543,7 @@ function openSpecReport(key){
       </table>
       <div class="note">활용: 직생 미대상(네트워크스위치/POE인젝터) — 입찰 X, 마스등록만 필요시 &nbsp;|&nbsp; 직생 대상(카메라류/서버류/기타) — 입찰시 반드시 필요<br>
       제품구성방식: 직생 미대상 — 주제품(네트워크스위치, POE인젝터) + 옵션제품(카메라류, 서버류, 기타) &nbsp;|&nbsp; 직생 대상 — 주제품(카메라류, 서버류, 기타) + 옵션제품(카메라류, 네트워크스위치, 서버류 등)</div>
-    `);
+    `, "GIT Green IT Korea · 인증비용 / 시료구매비용 / G-MAS 공급단가 기준표");
   }
 }
 
@@ -1627,6 +1673,298 @@ function runDbImport(rows, targetCategory){
   });
   saveData();
   return { matched, added };
+}
+
+
+/* ===================== 공통: 전체 히스토리 수집 ===================== */
+function gatherAllHistory(){
+  const list = [];
+  STATE.companies.forEach(c=>{
+    (c.history||[]).forEach(h=> list.push({
+      date: h.date||"", text: h.text||"", name: c.name, category: c.category,
+      assignee: c.assignee||"", companyId: c.id, level: c.level, stage: c.stage, dropped: c.dropped
+    }));
+  });
+  return list;
+}
+function stageLabel(stageId){ const s = STAGES.find(x=>x.id===stageId); return s ? s.label : stageId; }
+
+/* ===================== 달력 ===================== */
+function renderCalendar(){
+  const wrap = el("div");
+  const allHistory = gatherAllHistory();
+  const byDate = {};
+  allHistory.forEach(h=>{ if(!h.date) return; (byDate[h.date] = byDate[h.date]||[]).push(h); });
+
+  const anchor = new Date(STATE.calendarDate+"T00:00:00");
+
+  wrap.appendChild(el("div",{class:"topbar"},
+    el("div",null, el("h1",null,"달력"), el("div",{class:"sub"},"업체별로 기록한 진행 내용을 날짜순으로 확인하세요")),
+    el("div",{class:"toolbar cal-toolbar"},
+      el("div",{class:"seg"},
+        el("button",{class:"seg-btn"+(STATE.calendarMode==="week"?" active":""), onclick:()=>{STATE.calendarMode="week"; render();}}, "주간"),
+        el("button",{class:"seg-btn"+(STATE.calendarMode==="month"?" active":""), onclick:()=>{STATE.calendarMode="month"; render();}}, "월간"),
+      ),
+      el("button",{class:"btn-ghost btn-sm", onclick:()=>{ STATE.calendarDate = shiftDate(anchor, STATE.calendarMode==="week"?-7:-30, STATE.calendarMode).toISOString().slice(0,10); render(); }}, "◀"),
+      el("button",{class:"btn-ghost btn-sm", onclick:()=>{ STATE.calendarDate = new Date().toISOString().slice(0,10); render(); }}, "오늘"),
+      el("button",{class:"btn-ghost btn-sm", onclick:()=>{ STATE.calendarDate = shiftDate(anchor, STATE.calendarMode==="week"?7:30, STATE.calendarMode).toISOString().slice(0,10); render(); }}, "▶"),
+    )
+  ));
+
+  if(STATE.calendarMode==="month"){
+    wrap.appendChild(el("div",{class:"cal-period-label"}, anchor.getFullYear()+"년 "+(anchor.getMonth()+1)+"월"));
+    wrap.appendChild(buildMonthGrid(anchor, byDate));
+  } else {
+    const mon = getMonday(anchor);
+    const sun = new Date(mon); sun.setDate(mon.getDate()+6);
+    wrap.appendChild(el("div",{class:"cal-period-label"}, weekLabelFull(mon)));
+    wrap.appendChild(buildWeekGrid(mon, byDate));
+  }
+  return wrap;
+}
+function shiftDate(d, amount, mode){
+  const nd = new Date(d);
+  if(mode==="month"){ nd.setMonth(nd.getMonth() + (amount>0?1:-1)); }
+  else { nd.setDate(nd.getDate()+amount); }
+  return nd;
+}
+function ymd(d){ return d.toISOString().slice(0,10); }
+function calEntryLine(h){
+  const txt = h.text.length>10 ? h.text.slice(0,10)+"…" : h.text;
+  return el("div",{class:"cal-entry", title:h.name+" · "+h.category+" — "+h.text, onclick:(e)=>{ e.stopPropagation(); STATE.modalId=h.companyId; render(); }},
+    el("span",{class:"cal-entry-co"}, h.name), " · ", h.category, ": ", txt
+  );
+}
+function buildMonthGrid(anchor, byDate){
+  const year = anchor.getFullYear(), month = anchor.getMonth();
+  const first = new Date(year, month, 1);
+  const startDate = new Date(year, month, 1 - first.getDay());
+  const todayStr = ymd(new Date());
+  const grid = el("div",{class:"cal-grid"});
+  ["일","월","화","수","목","금","토"].forEach(d=> grid.appendChild(el("div",{class:"cal-dow"}, d)));
+  for(let i=0;i<42;i++){
+    const d = new Date(startDate); d.setDate(startDate.getDate()+i);
+    const dStr = ymd(d);
+    const inMonth = d.getMonth()===month;
+    const entries = (byDate[dStr]||[]).slice().sort((a,b)=>a.name.localeCompare(b.name));
+    const cell = el("div",{class:"cal-cell"+(inMonth?"":" dim")+(dStr===todayStr?" today":"")});
+    cell.appendChild(el("div",{class:"cal-daynum"}, String(d.getDate())));
+    const shown = entries.slice(0,3);
+    shown.forEach(h=> cell.appendChild(calEntryLine(h)));
+    if(entries.length>3) cell.appendChild(el("div",{class:"cal-more"}, "+"+(entries.length-3)+"개 더"));
+    grid.appendChild(cell);
+  }
+  return grid;
+}
+function buildWeekGrid(mon, byDate){
+  const todayStr = ymd(new Date());
+  const grid = el("div",{class:"cal-grid cal-grid-week"});
+  ["월","화","수","목","금","토","일"].forEach(d=> grid.appendChild(el("div",{class:"cal-dow"}, d)));
+  for(let i=0;i<7;i++){
+    const d = new Date(mon); d.setDate(mon.getDate()+i);
+    const dStr = ymd(d);
+    const entries = (byDate[dStr]||[]).slice().sort((a,b)=>a.name.localeCompare(b.name));
+    const cell = el("div",{class:"cal-cell cal-cell-week"+(dStr===todayStr?" today":"")});
+    cell.appendChild(el("div",{class:"cal-daynum"}, (d.getMonth()+1)+"/"+d.getDate()));
+    if(entries.length===0){
+      cell.appendChild(el("div",{style:"font-size:11px;color:#C4C9CE;"}, "-"));
+    } else {
+      entries.forEach(h=> cell.appendChild(calEntryLine(h)));
+    }
+    grid.appendChild(cell);
+  }
+  return grid;
+}
+
+/* ===================== 주간/월간 보고서 ===================== */
+function recentWeekOptions(n){
+  const list = [];
+  const mon = getMonday(new Date());
+  for(let i=0;i<n;i++){
+    const start = new Date(mon); start.setDate(mon.getDate() - i*7);
+    list.push({ key: ymd(start), start });
+  }
+  return list;
+}
+function recentMonthOptions(n){
+  const list = [];
+  const now = new Date();
+  for(let i=0;i<n;i++){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    const key = d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+    list.push({ key, label:d.getFullYear()+"년 "+(d.getMonth()+1)+"월", start:d, end:new Date(d.getFullYear(), d.getMonth()+1, 0) });
+  }
+  return list;
+}
+
+function renderReport(){
+  const wrap = el("div");
+  wrap.appendChild(el("div",{class:"topbar"},
+    el("div",null, el("h1",null,"주간/월간 보고서"), el("div",{class:"sub"},"선택한 기간의 업무 진행 내용을 날짜별로 정리해서 보여줘요")),
+  ));
+
+  const card = el("div",{class:"intake-card", style:"max-width:100%;"});
+
+  // 컨트롤
+  const controls = el("div",{class:"report-controls"});
+  const modeSelect = el("select",{onchange:(e)=>{ STATE.reportMode=e.target.value; render(); }});
+  [["week","주간"],["month","월간"]].forEach(([v,l])=>{
+    const opt = el("option",{value:v}, l);
+    if(STATE.reportMode===v) opt.setAttribute("selected","selected");
+    modeSelect.appendChild(opt);
+  });
+  controls.appendChild(modeSelect);
+
+  let rangeStart, rangeEnd, periodLabel;
+  if(STATE.reportMode==="week"){
+    const weeks = recentWeekOptions(16);
+    if(!STATE.reportWeekKey || !weeks.find(w=>w.key===STATE.reportWeekKey)) STATE.reportWeekKey = weeks[0].key;
+    const periodSelect = el("select",{onchange:(e)=>{ STATE.reportWeekKey=e.target.value; render(); }});
+    weeks.forEach(w=>{
+      const opt = el("option",{value:w.key}, weekLabelFull(w.start));
+      if(w.key===STATE.reportWeekKey) opt.setAttribute("selected","selected");
+      periodSelect.appendChild(opt);
+    });
+    controls.appendChild(periodSelect);
+    rangeStart = new Date(STATE.reportWeekKey+"T00:00:00");
+    rangeEnd = new Date(rangeStart); rangeEnd.setDate(rangeStart.getDate()+6);
+    periodLabel = weekLabelFull(rangeStart);
+  } else {
+    const months = recentMonthOptions(12);
+    if(!STATE.reportMonthKey || !months.find(m=>m.key===STATE.reportMonthKey)) STATE.reportMonthKey = months[0].key;
+    const periodSelect = el("select",{onchange:(e)=>{ STATE.reportMonthKey=e.target.value; render(); }});
+    months.forEach(m=>{
+      const opt = el("option",{value:m.key}, m.label);
+      if(m.key===STATE.reportMonthKey) opt.setAttribute("selected","selected");
+      periodSelect.appendChild(opt);
+    });
+    controls.appendChild(periodSelect);
+    const mObj = months.find(m=>m.key===STATE.reportMonthKey);
+    rangeStart = mObj.start; rangeEnd = mObj.end;
+    periodLabel = mObj.label;
+  }
+  card.appendChild(controls);
+
+  // 요약 표
+  card.appendChild(el("div",{class:"section-title", style:"margin-top:18px;"}, "공종별 현황 요약"));
+  card.appendChild(buildSummaryTable());
+
+  // 일별 상세
+  card.appendChild(el("div",{class:"section-title", style:"margin-top:20px;"}, periodLabel+" 일별 업무 내역"));
+  const dayGroups = buildDayGroups(rangeStart, rangeEnd);
+  if(dayGroups.every(g=>g.items.length===0)){
+    card.appendChild(el("div",{class:"empty-state"}, el("b",null,"해당 기간에 기록된 업무 내용이 없어요.")));
+  } else {
+    dayGroups.forEach(g=>{
+      if(g.items.length===0) return;
+      card.appendChild(el("div",{class:"report-day-label"}, g.label));
+      card.appendChild(buildDayTable(g.items));
+    });
+  }
+
+  const actions = el("div",{class:"intake-actions"},
+    el("button",{class:"btn-ghost", onclick:()=>openReportPrintView(periodLabel, dayGroups)}, "🖨 인쇄 / PDF로 보기"),
+    el("button",{class:"btn-ghost", onclick:()=>exportReportExcel(periodLabel, dayGroups)}, "⬇ Excel(CSV) 다운로드"),
+  );
+  card.appendChild(actions);
+
+  wrap.appendChild(card);
+  return wrap;
+}
+
+function buildSummaryTable(){
+  const table = el("table",{class:"pipeline-table"});
+  table.appendChild(el("tr",null, el("th",null,"공종"), el("th",null,"전체"), el("th",null,"A"), el("th",null,"B"), el("th",null,"C"), el("th",null,"DROP")));
+  CATEGORIES.forEach(cat=>{
+    const items = STATE.companies.filter(c=>c.category===cat);
+    const active = items.filter(c=>!c.dropped);
+    const byLevel = {A:0,B:0,C:0};
+    active.forEach(c=>byLevel[c.level]++);
+    table.appendChild(el("tr",null,
+      el("td",{class:"company-name-cell"}, cat),
+      el("td",null, String(items.length)),
+      el("td",null, String(byLevel.A)),
+      el("td",null, String(byLevel.B)),
+      el("td",null, String(byLevel.C)),
+      el("td",null, String(items.filter(c=>c.dropped).length)),
+    ));
+  });
+  return table;
+}
+
+function buildDayGroups(rangeStart, rangeEnd){
+  const allHistory = gatherAllHistory();
+  const byDate = {};
+  allHistory.forEach(h=>{ if(!h.date) return; (byDate[h.date]=byDate[h.date]||[]).push(h); });
+  const groups = [];
+  const cursor = new Date(rangeStart);
+  while(cursor <= rangeEnd){
+    const dStr = ymd(cursor);
+    const items = (byDate[dStr]||[]).slice().sort((a,b)=>a.category.localeCompare(b.category)||a.name.localeCompare(b.name));
+    groups.push({ date:dStr, label: dStr+" ("+["일","월","화","수","목","금","토"][cursor.getDay()]+")", items });
+    cursor.setDate(cursor.getDate()+1);
+  }
+  return groups;
+}
+function buildDayTable(items){
+  const table = el("table",{class:"pipeline-table", style:"margin-bottom:14px;"});
+  table.appendChild(el("tr",null, el("th",null,"업체명"), el("th",null,"공종"), el("th",null,"레벨"), el("th",null,"진행 단계"), el("th",null,"담당자"), el("th",null,"진행 내용")));
+  items.forEach(h=>{
+    table.appendChild(el("tr",{onclick:()=>{ STATE.modalId=h.companyId; render(); }},
+      el("td",{class:"company-name-cell"}, h.name),
+      el("td",null, h.category),
+      el("td",null, el("span",{class:"level-tag "+(h.dropped?"DROP":h.level)}, h.dropped?"DROP":h.level)),
+      el("td",null, h.dropped?"DROP":stageLabel(h.stage)),
+      el("td",null, h.assignee||"-"),
+      el("td",null, h.text)
+    ));
+  });
+  return table;
+}
+
+function openReportPrintView(periodLabel, dayGroups){
+  const summaryRows = CATEGORIES.map(cat=>{
+    const items = STATE.companies.filter(c=>c.category===cat);
+    const active = items.filter(c=>!c.dropped);
+    const byLevel = {A:0,B:0,C:0};
+    active.forEach(c=>byLevel[c.level]++);
+    return "<tr><td class='left'>"+cat+"</td><td>"+items.length+"</td><td>"+byLevel.A+"</td><td>"+byLevel.B+"</td><td>"+byLevel.C+"</td><td>"+items.filter(c=>c.dropped).length+"</td></tr>";
+  }).join("");
+
+  const dayHtml = dayGroups.filter(g=>g.items.length>0).map(g=>{
+    const rows = g.items.map(h=>
+      "<tr><td class='left'>"+escapeHtml(h.name)+"</td><td>"+escapeHtml(h.category)+"</td><td>"+(h.dropped?"DROP":h.level)+"</td><td>"+(h.dropped?"DROP":escapeHtml(stageLabel(h.stage)))+"</td><td>"+escapeHtml(h.assignee||"-")+"</td><td class='left'>"+escapeHtml(h.text)+"</td></tr>"
+    ).join("");
+    return "<div class='daylabel'>"+escapeHtml(g.label)+"</div><table><tr><th>업체명</th><th>공종</th><th>레벨</th><th>진행단계</th><th>담당자</th><th>진행 내용</th></tr>"+rows+"</table>";
+  }).join("");
+
+  specWindowShell("주간/월간 보고서 · "+periodLabel, `
+    <h2 style="font-size:14px;margin:0 0 8px;">공종별 현황 요약</h2>
+    <table><tr><th>공종</th><th>전체</th><th>A</th><th>B</th><th>C</th><th>DROP</th></tr>${summaryRows}</table>
+    <h2 style="font-size:14px;margin:18px 0 8px;">일별 업무 내역</h2>
+    ${dayHtml || "<div class='note'>해당 기간에 기록된 업무 내용이 없어요.</div>"}
+  `, "GIT Green IT Korea · MAS 영업 파이프라인 업무 보고서");
+}
+
+function exportReportExcel(periodLabel, dayGroups){
+  const rows = [["구분","공종","전체","A","B","C","DROP"]];
+  CATEGORIES.forEach(cat=>{
+    const items = STATE.companies.filter(c=>c.category===cat);
+    const active = items.filter(c=>!c.dropped);
+    const byLevel = {A:0,B:0,C:0};
+    active.forEach(c=>byLevel[c.level]++);
+    rows.push(["요약", cat, items.length, byLevel.A, byLevel.B, byLevel.C, items.filter(c=>c.dropped).length]);
+  });
+  rows.push([]);
+  rows.push(["날짜","업체명","공종","레벨","진행단계","담당자","진행 내용"]);
+  dayGroups.forEach(g=>{
+    g.items.forEach(h=>{
+      rows.push([g.date, h.name, h.category, h.dropped?"DROP":h.level, h.dropped?"DROP":stageLabel(h.stage), h.assignee||"", h.text]);
+    });
+  });
+  const csv = rows.map(r=>r.map(csvEscape).join(",")).join("\r\n");
+  downloadBlob("\uFEFF"+csv, "MAS_보고서_"+periodLabel.replace(/[^0-9a-zA-Z가-힣]/g,"")+"_"+today()+".csv", "text/csv;charset=utf-8;");
+  showToast("보고서를 다운로드했어요");
 }
 
 
