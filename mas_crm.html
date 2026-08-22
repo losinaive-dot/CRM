@@ -977,6 +977,16 @@ function distinctAssignees(){
   return Array.from(set).sort((a,b)=>a.localeCompare(b,"ko"));
 }
 
+function latestHistoryText(c){
+  if(!c.history || !c.history.length) return "";
+  const sorted = c.history.slice().sort((a,b)=> (b.date||"").localeCompare(a.date||""));
+  return sorted[0].text || "";
+}
+function truncateText(text, n){
+  if(!text) return "-";
+  return text.length > n ? text.slice(0, n)+"…" : text;
+}
+
 function buildStageFilterResults(){
   const f = STATE.stageFilter;
   const results = STATE.companies.filter(c=>{
@@ -996,15 +1006,16 @@ function buildStageFilterResults(){
   }
 
   const table = el("table",{class:"pipeline-table", style:"margin-top:10px;"});
-  table.appendChild(el("tr",null, el("th",null,"업체명"), el("th",null,"공종"), el("th",null,"레벨"), el("th",null,"진행 단계"), el("th",null,"담당자"), el("th",null,"실무 연락처")));
+  table.appendChild(el("tr",null, el("th",null,"업체명"), el("th",null,"공종"), el("th",null,"레벨"), el("th",null,"진행 단계"), el("th",null,"담당자"), el("th",null,"최근 내용")));
   results.forEach(c=>{
+    const latest = latestHistoryText(c);
     table.appendChild(el("tr",{onclick:()=>{ STATE.modalId=c.id; render(); }},
       el("td",{class:"company-name-cell"}, c.name),
       el("td",null, c.category),
       el("td",null, el("span",{class:"level-tag "+(c.dropped?"DROP":c.level)}, c.dropped?"DROP":c.level)),
       el("td",null, stageProgress(c)),
       el("td",null, c.assignee ? el("span",{class:"assignee-chip"}, c.assignee) : el("span",{class:"assignee-chip empty"}, "미지정")),
-      el("td",null, c.managerName ? (c.managerName+(c.managerPhone?" · "+c.managerPhone:"")) : "-")
+      el("td",{title: latest||""}, truncateText(latest, 22))
     ));
   });
   wrap.appendChild(table);
