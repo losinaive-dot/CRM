@@ -247,6 +247,8 @@
   .cal-grid-week{grid-template-columns:repeat(7,1fr);}
   .cal-dow{text-align:center; font-size:11.5px; font-weight:800; color:var(--ink-soft); padding:4px 0;}
   .cal-cell{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:6px; min-height:88px;}
+  .cal-grid-showall{align-items:start;}
+  .cal-cell-tall{min-height:88px; height:auto;}
   .cal-cell.dim{background:#FAFAF9; color:#B5BBC2;}
   .cal-cell.dim .cal-daynum{color:#C4C9CE;}
   .cal-cell.today{border-color:var(--teal); box-shadow:0 0 0 2px var(--teal-soft);}
@@ -447,7 +449,7 @@ const ADMIN_PASSWORD = "git2026";
 
 let STATE = { companies: [], view: "dashboard", filterLevel:"", filterStage:"", search:"", modalId:null, addingNew:false, intakeForm: freshIntakeForm(),
   dashAssigneeQuery:"", dashCompanyQuery:"", updateWeekKey:"", updateAssignee:"", isAdmin:false, stageFilter:null,
-  calendarMode:"month", calendarDate:ymd(new Date()),
+  calendarMode:"month", calendarDate:ymd(new Date()), calendarShowAll:false,
   reportMode:"week", reportWeekKey:"", reportMonthKey:"" };
 
 function freshIntakeForm(){
@@ -1708,12 +1710,16 @@ function renderCalendar(){
       el("button",{class:"btn-ghost btn-sm", onclick:()=>{ STATE.calendarDate = ymd(shiftDate(anchor, STATE.calendarMode==="week"?-7:-30, STATE.calendarMode)); render(); }}, "◀"),
       el("button",{class:"btn-ghost btn-sm", onclick:()=>{ STATE.calendarDate = ymd(new Date()); render(); }}, "오늘"),
       el("button",{class:"btn-ghost btn-sm", onclick:()=>{ STATE.calendarDate = ymd(shiftDate(anchor, STATE.calendarMode==="week"?7:30, STATE.calendarMode)); render(); }}, "▶"),
+      STATE.calendarMode==="month" ? el("div",{class:"seg"},
+        el("button",{class:"seg-btn"+(!STATE.calendarShowAll?" active":""), onclick:()=>{STATE.calendarShowAll=false; render();}}, "3건만"),
+        el("button",{class:"seg-btn"+(STATE.calendarShowAll?" active":""), onclick:()=>{STATE.calendarShowAll=true; render();}}, "전체 보기"),
+      ) : null,
     )
   ));
 
   if(STATE.calendarMode==="month"){
     wrap.appendChild(el("div",{class:"cal-period-label"}, anchor.getFullYear()+"년 "+(anchor.getMonth()+1)+"월"));
-    wrap.appendChild(buildMonthGrid(anchor, byDate));
+    wrap.appendChild(buildMonthGrid(anchor, byDate, STATE.calendarShowAll));
   } else {
     const mon = getMonday(anchor);
     const sun = new Date(mon); sun.setDate(mon.getDate()+6);
@@ -1741,23 +1747,27 @@ function calEntryLine(h){
     el("span",{class:"cal-entry-co"}, h.name), " · ", h.category, ": ", txt
   );
 }
-function buildMonthGrid(anchor, byDate){
+function buildMonthGrid(anchor, byDate, showAll){
   const year = anchor.getFullYear(), month = anchor.getMonth();
   const first = new Date(year, month, 1);
   const startDate = new Date(year, month, 1 - first.getDay());
   const todayStr = ymd(new Date());
-  const grid = el("div",{class:"cal-grid"});
+  const grid = el("div",{class:"cal-grid"+(showAll?" cal-grid-showall":"")});
   ["일","월","화","수","목","금","토"].forEach(d=> grid.appendChild(el("div",{class:"cal-dow"}, d)));
   for(let i=0;i<42;i++){
     const d = new Date(startDate); d.setDate(startDate.getDate()+i);
     const dStr = ymd(d);
     const inMonth = d.getMonth()===month;
     const entries = (byDate[dStr]||[]).slice().sort((a,b)=>a.name.localeCompare(b.name));
-    const cell = el("div",{class:"cal-cell"+(inMonth?"":" dim")+(dStr===todayStr?" today":"")});
+    const cell = el("div",{class:"cal-cell"+(inMonth?"":" dim")+(dStr===todayStr?" today":"")+(showAll?" cal-cell-tall":"")});
     cell.appendChild(el("div",{class:"cal-daynum"}, String(d.getDate())));
-    const shown = entries.slice(0,3);
-    shown.forEach(h=> cell.appendChild(calEntryLine(h)));
-    if(entries.length>3) cell.appendChild(el("div",{class:"cal-more"}, "+"+(entries.length-3)+"개 더"));
+    if(showAll){
+      entries.forEach(h=> cell.appendChild(calEntryLine(h)));
+    } else {
+      const shown = entries.slice(0,3);
+      shown.forEach(h=> cell.appendChild(calEntryLine(h)));
+      if(entries.length>3) cell.appendChild(el("div",{class:"cal-more"}, "+"+(entries.length-3)+"개 더"));
+    }
     grid.appendChild(cell);
   }
   return grid;
