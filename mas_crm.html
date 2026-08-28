@@ -263,6 +263,13 @@
   .report-controls{display:flex; gap:10px; flex-wrap:wrap;}
   .report-day-label{font-size:13px; font-weight:800; color:var(--steel); margin:14px 0 6px;}
 
+  /* 영업자별 현황 */
+  .assignee-co-card{background:#fff; border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:12px;}
+  .assignee-co-head{display:flex; align-items:center; justify-content:space-between; gap:10px; cursor:pointer; margin-bottom:8px;}
+  .assignee-co-head:hover .company-name-cell{color:var(--teal);}
+  .assignee-hist-wrap{margin-top:10px; border-top:1px solid var(--line); padding-top:8px;}
+  .quote-total-line{margin-top:12px; padding:12px 16px; background:var(--teal-soft); border-radius:8px; font-size:14px;}
+
   /* 상담 체크리스트 폼 */
   .intake-card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:20px 22px; max-width:760px;}
   .intake-sec{margin-top:22px; padding-top:16px; border-top:1px solid var(--line);}
@@ -378,6 +385,12 @@ const STAGES = [
   {id:"price",   label:"가격협상/등록"},
 ];
 const LEVELS = ["A","B","C"];
+const PRODUCT_CATEGORIES = ["영상감시","주차관제","출입통제","비상벨"];
+
+const SEED_PRODUCTS = [{"category": "주차관제", "name": "주차주제어장치 / 차량번호관리컴퓨터", "model": "G-PST100A", "masPrice": 2960000, "samplePrice": ""}, {"category": "주차관제", "name": "주차요금계산기 / 사전정산기/카드전용/BF인증", "model": "GIT-PC25-BF", "masPrice": 6400000, "samplePrice": ""}, {"category": "주차관제", "name": "주차요금계산기 / 출구정산기/카드전용/BF인증", "model": "GIT-PC25-BC", "masPrice": 6160000, "samplePrice": ""}, {"category": "주차관제", "name": "차량인식기 / 차량번호인식(LPR)/단방향/전광판일체형", "model": "GIT-PL25-OI", "masPrice": 3280000, "samplePrice": ""}, {"category": "주차관제", "name": "차량인식기 / 보조차량인식기", "model": "GIT-PL25-BI", "masPrice": 1600000, "samplePrice": ""}, {"category": "주차관제", "name": "차량차단기 / 통합차단기(차단기+LPR)", "model": "GIT-PB25-IJ", "masPrice": 3400000, "samplePrice": ""}, {"category": "주차관제", "name": "차량차단기 / 단독차단기", "model": "GIT-PB25D-IJ", "masPrice": 976000, "samplePrice": ""}, {"category": "주차관제", "name": "주차안내판 / 입구만차등(1단)", "model": "GIT-PIN100", "masPrice": 812500, "samplePrice": ""}, {"category": "주차관제", "name": "주차안내판 / 입구만차등(4단)", "model": "GIT-PI026-IM4", "masPrice": 1925000, "samplePrice": ""}, {"category": "주차관제", "name": "주차안내판 / 입구만차등(8단)", "model": "GIT-PI026-IM8", "masPrice": 2379688, "samplePrice": ""}, {"category": "비상벨", "name": "비상벨서버(리눅스) / GIT-STR06L", "model": "GIT-STR06L", "masPrice": 1801250, "samplePrice": ""}, {"category": "비상벨", "name": "비상벨서버(100ch) / GM-SSUYC20I", "model": "GM-SSUYC20I", "masPrice": 775000, "samplePrice": ""}, {"category": "비상벨", "name": "방송수신기(실외) / GIT-CB06-GW", "model": "GIT-CB06-GW", "masPrice": 487150, "samplePrice": ""}, {"category": "비상벨", "name": "ip전화기 / LIP-1010i", "model": "LIP-1010i", "masPrice": 151250, "samplePrice": ""}, {"category": "비상벨", "name": "IP전화기(화상) / IPECS-1080i", "model": "IPECS-1080i", "masPrice": 762300, "samplePrice": ""}, {"category": "비상벨", "name": "무선(화장실) / GIT-CA25-MB", "model": "GIT-CA25-MB", "masPrice": 137000, "samplePrice": ""}, {"category": "비상벨", "name": "실내형(중계) / GIT-CA25-BS", "model": "GIT-CA25-BS", "masPrice": 474000, "samplePrice": ""}, {"category": "비상벨", "name": "실내형(주차,중계X) / GIT-CA25B-BS", "model": "GIT-CA25B-BS", "masPrice": 402000, "samplePrice": ""}, {"category": "비상벨", "name": "실외형(AI, 게이트웨이) / GIT-CA25-BP", "model": "GIT-CA25-BP", "masPrice": 653000, "samplePrice": ""}, {"category": "비상벨", "name": "실외형(버튼,게이트웨이) / GIT-CA25B-BP", "model": "GIT-CA25B-BP", "masPrice": 507000, "samplePrice": ""}, {"category": "출입통제", "name": "단말기(EST) / 카드리더기", "model": "ABR128P", "masPrice": 156750, "samplePrice": ""}, {"category": "출입통제", "name": "ACU(EST) / 4Ch", "model": "BCS-TC4", "masPrice": 579700, "samplePrice": ""}, {"category": "출입통제", "name": "ACU(EST) / 8Ch", "model": "BCS-TC8", "masPrice": 1166000, "samplePrice": ""}, {"category": "출입통제", "name": "단말기(성현) / 카드리더기", "model": "", "masPrice": "", "samplePrice": ""}, {"category": "출입통제", "name": "ACU(성현) / 2CH", "model": "", "masPrice": "", "samplePrice": ""}, {"category": "출입통제", "name": "ACU(성현) / 4CH", "model": "", "masPrice": "", "samplePrice": ""}, {"category": "출입통제", "name": "출입통제서버 / GIT-STR06L", "model": "", "masPrice": 1240250, "samplePrice": ""}, {"category": "출입통제", "name": "카드 등록기 / GIT-AG200", "model": "", "masPrice": 206250, "samplePrice": ""}, {"category": "출입통제", "name": "지문+카드리더기 / GM-AFG128B", "model": "", "masPrice": 460625, "samplePrice": ""}, {"category": "출입통제", "name": "얼굴인식기 / GIT-AFI100B", "model": "", "masPrice": 1306250, "samplePrice": ""}, {"category": "출입통제", "name": "얼굴+지문인식기 / GIT-AFI200", "model": "", "masPrice": 742500, "samplePrice": ""}, {"category": "출입통제", "name": "카드리더기 / GIT-ARC101W", "model": "", "masPrice": 96250, "samplePrice": ""}, {"category": "출입통제", "name": "스트라이커 / GIT-GS500", "model": "", "masPrice": 66000, "samplePrice": ""}, {"category": "출입통제", "name": "스트라이커 / GIT-GS1000", "model": "", "masPrice": 220000, "samplePrice": ""}, {"category": "출입통제", "name": "스트라이커 / GIT-GS3000", "model": "", "masPrice": 171875, "samplePrice": ""}, {"category": "출입통제", "name": "데드볼트 / GIT-GD1000", "model": "", "masPrice": 61875, "samplePrice": ""}, {"category": "출입통제", "name": "E/M Lock / GIT-GE1000", "model": "", "masPrice": 61875, "samplePrice": ""}, {"category": "출입통제", "name": "E/M Lock / GIT-GE5000", "model": "", "masPrice": 137500, "samplePrice": ""}, {"category": "출입통제", "name": "도어루프(매립형) / GIT-DH100RC", "model": "", "masPrice": 15125, "samplePrice": ""}, {"category": "출입통제", "name": "도어루프(노출형) / GIT-DH100EP", "model": "", "masPrice": 13750, "samplePrice": ""}, {"category": "출입통제", "name": "퇴실버튼 / GIT-GB10", "model": "", "masPrice": 8250, "samplePrice": ""}, {"category": "출입통제", "name": "퇴실버튼 / G-GB50", "model": "", "masPrice": 11000, "samplePrice": ""}, {"category": "출입통제", "name": "퇴실버튼 / G-GB500", "model": "", "masPrice": 13750, "samplePrice": ""}, {"category": "출입통제", "name": "컨트롤러 / GIT-AIO", "model": "", "masPrice": 61875, "samplePrice": ""}, {"category": "출입통제", "name": "컴퓨터서버 / GIT-WSPC-NR1", "model": "", "masPrice": 1996500, "samplePrice": ""}, {"category": "출입통제", "name": "모바일카드리더기 / GIT-ABR128A", "model": "", "masPrice": 134750, "samplePrice": ""}, {"category": "출입통제", "name": "네트워크스위치 / GIT-CH08P", "model": "", "masPrice": 246125, "samplePrice": ""}, {"category": "출입통제", "name": "액정모니터 / GIT-CM215HAR", "model": "", "masPrice": 233750, "samplePrice": ""}, {"category": "출입통제", "name": "브래킷 / GIT-GEB1000", "model": "", "masPrice": 27500, "samplePrice": ""}];
+
+const GIT_STAFF = [{"name": "유기수 본부장", "phone": "010-8870-4686", "email": "yuksu3@greenitkr.com"}, {"name": "송태엽 팀장", "phone": "010-3000-2511", "email": "tysong@greenitkr.com"}, {"name": "임주경 팀장", "phone": "010-4532-6383", "email": "ljk@greenitkr.com"}, {"name": "엄상조 차장", "phone": "010-2110-5000", "email": "sangjoeom@greenitkr.com"}, {"name": "전호섭 팀장", "phone": "010-3537-6670", "email": "hsjeon@greenitkr.com"}, {"name": "배동현 팀장", "phone": "010-8588-9758", "email": "dhbae@greenitkr.com"}, {"name": "박종민 본부장", "phone": "010-2010-9233", "email": "JMINP0610@greenitkr.com"}, {"name": "남종우 팀장", "phone": "010-2419-6780", "email": "jwman@greenitkr.com"}];
+
 const STAGE_INDEX = Object.fromEntries(STAGES.map((s,i)=>[s.id,i]));
 
 /* ===================== 시드 데이터 ===================== */
@@ -450,7 +463,10 @@ const ADMIN_PASSWORD = "git2026";
 let STATE = { companies: [], view: "dashboard", filterLevel:"", filterStage:"", search:"", modalId:null, addingNew:false, intakeForm: freshIntakeForm(),
   dashAssigneeQuery:"", dashCompanyQuery:"", updateWeekKey:"", updateAssignee:"", isAdmin:false, stageFilter:null,
   calendarMode:"month", calendarDate:ymd(new Date()), calendarShowAll:false,
-  reportMode:"week", reportWeekKey:"", reportMonthKey:"" };
+  reportMode:"week", reportWeekKey:"", reportMonthKey:"",
+  assigneeViewSelected:"", assigneeViewCompanyQuery:"", assigneeExpanded:{},
+  productInfo:{ "영상감시":[], "주차관제":[], "출입통제":[], "비상벨":[] }, productViewCategory:"주차관제",
+  quotes:[], quoteForm:null, quoteSearchQuery:"" };
 
 function freshIntakeForm(){
   return {
@@ -493,6 +509,43 @@ async function loadData(){
   render();
 }
 
+async function loadProductInfo(){
+  try{
+    const res = await fetch(SHEETS_URL+"?sheet=product", { method:"GET" });
+    const data = await res.json();
+    if(data && data.ok && Array.isArray(data.products) && data.products.length > 0){
+      const grouped = { "영상감시":[], "주차관제":[], "출입통제":[], "비상벨":[] };
+      data.products.forEach(p=>{
+        if(!grouped[p.category]) grouped[p.category] = [];
+        grouped[p.category].push({ name:p.name||"", model:p.model||"", masPrice:p.masPrice===""?"":p.masPrice, samplePrice:p.samplePrice===""?"":p.samplePrice });
+      });
+      STATE.productInfo = grouped;
+    } else {
+      // 시트가 비어있으면 견적 자동화 엑셀에서 가져온 초기 단가표로 채워서 저장해둔다.
+      const grouped = { "영상감시":[], "주차관제":[], "출입통제":[], "비상벨":[] };
+      SEED_PRODUCTS.forEach(p=> grouped[p.category].push({ name:p.name, model:p.model, masPrice:p.masPrice, samplePrice:p.samplePrice }));
+      STATE.productInfo = grouped;
+      await saveProductInfo();
+    }
+  }catch(e){
+    console.error("제품정보 불러오기 실패", e);
+  }
+  render();
+}
+
+async function loadQuotes(){
+  try{
+    const res = await fetch(SHEETS_URL+"?sheet=quotes", { method:"GET" });
+    const data = await res.json();
+    if(data && data.ok && Array.isArray(data.quotes)){
+      STATE.quotes = data.quotes;
+    }
+  }catch(e){
+    console.error("견적서 목록 불러오기 실패", e);
+  }
+  render();
+}
+
 // 저장 요청이 겹치지 않도록 큐로 묶어서 순차 처리하고, 실패 시 자동 재시도한다.
 let _saveInFlight = false;
 let _saveQueued = false;
@@ -525,6 +578,61 @@ async function saveWithRetry(companiesSnapshot, attemptsLeft){
       await sleep(800);
       return saveWithRetry(companiesSnapshot, attemptsLeft - 1);
     }
+    return false;
+  }
+}
+
+// 업체별 제품정보 전체를 구글시트(ProductInfo)에 저장
+async function saveProductInfo(){
+  const flat = [];
+  PRODUCT_CATEGORIES.forEach(cat=>{
+    (STATE.productInfo[cat]||[]).forEach(p=>{
+      if(!p.name && !p.model) return; // 완전히 빈 행은 저장하지 않는다
+      flat.push({ category:cat, name:p.name||"", model:p.model||"", masPrice:p.masPrice===""?"":p.masPrice, samplePrice:p.samplePrice===""?"":p.samplePrice });
+    });
+  });
+  try{
+    const res = await fetch(SHEETS_URL, {
+      method:"POST",
+      headers:{ "Content-Type":"text/plain;charset=utf-8" },
+      body: JSON.stringify({ type:"saveProduct", products: flat })
+    });
+    const data = await res.json();
+    if(!data || !data.ok) throw new Error((data&&data.error)||"unknown");
+  }catch(e){
+    console.error("제품정보 저장 실패", e);
+    showToast("제품정보 저장에 실패했어요. 잠시 후 다시 시도해 주세요.");
+  }
+}
+
+// 견적서 저장(같은 id면 갱신)
+async function saveQuoteToServer(quote){
+  try{
+    const res = await fetch(SHEETS_URL, {
+      method:"POST",
+      headers:{ "Content-Type":"text/plain;charset=utf-8" },
+      body: JSON.stringify({ type:"saveQuote", quote })
+    });
+    const data = await res.json();
+    if(!data || !data.ok) throw new Error((data&&data.error)||"unknown");
+    return true;
+  }catch(e){
+    console.error("견적서 저장 실패", e);
+    showToast("견적서 저장에 실패했어요. 잠시 후 다시 시도해 주세요.");
+    return false;
+  }
+}
+async function deleteQuoteFromServer(id){
+  try{
+    const res = await fetch(SHEETS_URL, {
+      method:"POST",
+      headers:{ "Content-Type":"text/plain;charset=utf-8" },
+      body: JSON.stringify({ type:"deleteQuote", id })
+    });
+    const data = await res.json();
+    return !!(data && data.ok);
+  }catch(e){
+    console.error("견적서 삭제 실패", e);
     return false;
   }
 }
@@ -757,6 +865,15 @@ function renderSidebar(){
   const reportNav = el("div", {class:"nav-item"+(STATE.view==="report"?" active":""), onclick:()=>{STATE.view="report"; render();}}, "📊 주간/월간 보고서");
   sb.appendChild(reportNav);
 
+  const assigneeNav = el("div", {class:"nav-item"+(STATE.view==="byAssignee"?" active":""), onclick:()=>{STATE.view="byAssignee"; render();}}, "👤 영업자별 현황");
+  sb.appendChild(assigneeNav);
+
+  const quoteNav = el("div", {class:"nav-item"+(STATE.view==="quote"?" active":""), onclick:()=>{STATE.view="quote"; render();}}, "🧾 견적서 작성");
+  sb.appendChild(quoteNav);
+
+  const productNav = el("div", {class:"nav-item"+(STATE.view==="productInfo"?" active":""), onclick:()=>{STATE.view="productInfo"; render();}}, "🏷️ 업체별 제품정보");
+  sb.appendChild(productNav);
+
   const specBtns = el("div",{class:"spec-nav"},
     el("div",{class:"spec-nav-item", onclick:()=>openSpecReport("parking")}, "🅿️ 주차관제 구성"),
     el("div",{class:"spec-nav-item", onclick:()=>openSpecReport("access")}, "🚪 출입통제 구성"),
@@ -859,6 +976,12 @@ function renderMain(){
     main.appendChild(renderCalendar());
   } else if(STATE.view === "report"){
     main.appendChild(renderReport());
+  } else if(STATE.view === "byAssignee"){
+    main.appendChild(renderAssigneeView());
+  } else if(STATE.view === "quote"){
+    main.appendChild(renderQuoteBuilder());
+  } else if(STATE.view === "productInfo"){
+    main.appendChild(renderProductInfo());
   } else {
     main.appendChild(renderCategoryView(STATE.view));
   }
@@ -2029,6 +2152,423 @@ function exportReportExcel(periodLabel, dayGroups){
 }
 
 
+/* ===================== 영업자별 현황 ===================== */
+function renderAssigneeView(){
+  const wrap = el("div");
+  wrap.appendChild(el("div",{class:"topbar"},
+    el("div",null, el("h1",null,"영업자별 현황"), el("div",{class:"sub"},"담당 영업자를 선택하면 그 사람이 맡은 업체의 진행단계와 히스토리를 한번에 볼 수 있어요")),
+  ));
+
+  const card = el("div",{class:"intake-card", style:"max-width:100%;"});
+
+  // 영업자 선택
+  const pickSec = el("div",{class:"intake-sec"});
+  pickSec.appendChild(el("div",{class:"intake-sec-title"}, el("span",{class:"mark"},"■"), "영업자 선택"));
+  const assigneeList = el("datalist",{id:"assignee-view-datalist"});
+  distinctAssignees().forEach(name=> assigneeList.appendChild(el("option",{value:name})));
+  const assigneeInput = el("input",{type:"text", list:"assignee-view-datalist", placeholder:"영업자명 입력 또는 목록에서 선택", style:"width:280px;"});
+  assigneeInput.value = STATE.assigneeViewSelected;
+  assigneeInput.addEventListener("change", (e)=>{ STATE.assigneeViewSelected = e.target.value.trim(); render(); });
+  assigneeInput.addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ STATE.assigneeViewSelected = e.target.value.trim(); render(); } });
+  pickSec.appendChild(assigneeInput);
+  pickSec.appendChild(assigneeList);
+
+  // 담당자 배지 목록(빠른 선택)
+  const chipRow = el("div",{style:"display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;"});
+  distinctAssignees().forEach(name=>{
+    const n = STATE.companies.filter(c=>c.assignee===name).length;
+    chipRow.appendChild(el("span",{class:"assignee-chip"+(STATE.assigneeViewSelected===name?"":" empty"), style:"cursor:pointer;", onclick:()=>{ STATE.assigneeViewSelected=name; render(); }}, name+" ("+n+")"));
+  });
+  pickSec.appendChild(chipRow);
+  card.appendChild(pickSec);
+
+  if(!STATE.assigneeViewSelected){
+    card.appendChild(el("div",{class:"empty-state", style:"margin-top:16px;"}, el("b",null,"영업자를 선택해주세요."), el("div",null,"위에서 이름을 입력하거나 목록에서 클릭하면 담당 업체 현황이 표시돼요.")));
+    wrap.appendChild(card);
+    return wrap;
+  }
+
+  const name = STATE.assigneeViewSelected;
+  let companies = STATE.companies.filter(c=>c.assignee===name);
+  const qSec = el("div",{class:"intake-sec"});
+  const qInput = el("input",{type:"text", placeholder:"업체명으로 추가 검색", style:"width:220px;"});
+  qInput.value = STATE.assigneeViewCompanyQuery;
+  qInput.addEventListener("input", (e)=>{ STATE.assigneeViewCompanyQuery = e.target.value; renderList(); });
+  qSec.appendChild(el("div",{class:"intake-sec-title"}, el("span",{class:"mark"},"■"), name+"님 담당 업체 (총 "+companies.length+"개)"));
+  qSec.appendChild(qInput);
+  card.appendChild(qSec);
+
+  const listHolder = el("div",{style:"margin-top:12px;"});
+  card.appendChild(listHolder);
+
+  const actions = el("div",{class:"intake-actions"});
+  card.appendChild(actions);
+
+  function renderList(){
+    listHolder.innerHTML = "";
+    actions.innerHTML = "";
+    const q = STATE.assigneeViewCompanyQuery.trim();
+    const filtered = q ? companies.filter(c=>c.name.includes(q)) : companies;
+
+    if(filtered.length===0){
+      listHolder.appendChild(el("div",{class:"empty-state"}, el("b",null,"조건에 맞는 업체가 없어요.")));
+      return;
+    }
+    filtered.forEach(c=> listHolder.appendChild(buildAssigneeCompanyCard(c)));
+
+    actions.appendChild(el("button",{class:"btn-ghost", onclick:()=>openAssigneeReportPrint(name, filtered)}, "🖨 인쇄 / PDF로 보기"));
+    actions.appendChild(el("button",{class:"btn-ghost", onclick:()=>exportAssigneeExcel(name, filtered)}, "⬇ Excel(CSV) 다운로드"));
+  }
+  renderList();
+
+  wrap.appendChild(card);
+  return wrap;
+}
+
+function buildAssigneeCompanyCard(c){
+  const expanded = !!STATE.assigneeExpanded[c.id];
+  const hist = (c.history||[]).slice().sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+  const shownHist = expanded ? hist : hist.slice(0,5);
+
+  const card = el("div",{class:"assignee-co-card"});
+  card.appendChild(el("div",{class:"assignee-co-head", onclick:()=>{ STATE.modalId=c.id; render(); }},
+    el("div",null,
+      el("span",{class:"company-name-cell"}, c.name),
+      el("span",{class:"cat-tag", style:"margin-left:8px;"}, c.category)
+    ),
+    el("span",{class:"level-tag "+(c.dropped?"DROP":c.level)}, c.dropped?"DROP":c.level)
+  ));
+  card.appendChild(stageProgress(c));
+
+  const histWrap = el("div",{class:"assignee-hist-wrap"});
+  if(hist.length===0){
+    histWrap.appendChild(el("div",{style:"font-size:12px;color:var(--ink-soft);padding:6px 0;"}, "기록된 히스토리가 없어요."));
+  } else {
+    shownHist.forEach(h=>{
+      histWrap.appendChild(el("div",{class:"history-item"},
+        el("div",{class:"history-date"}, h.date||"-"),
+        el("div",{class:"history-text"}, h.text)
+      ));
+    });
+    if(hist.length>5){
+      histWrap.appendChild(el("button",{class:"btn-ghost btn-sm", style:"margin-top:6px;", onclick:()=>{
+        STATE.assigneeExpanded[c.id] = !expanded;
+        render();
+      }}, expanded ? "최근 5건만 보기" : "전체 이력 보기 ("+hist.length+"건)"));
+    }
+  }
+  card.appendChild(histWrap);
+  return card;
+}
+
+function openAssigneeReportPrint(name, companies){
+  const body = companies.map(c=>{
+    const hist = (c.history||[]).slice().sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+    const histRows = hist.length
+      ? hist.map(h=>"<tr><td>"+escapeHtml(h.date||"-")+"</td><td class='left'>"+escapeHtml(h.text)+"</td></tr>").join("")
+      : "<tr><td colspan='2' class='left'>기록된 히스토리가 없어요.</td></tr>";
+    return `
+      <div class="daylabel">${escapeHtml(c.name)} (${escapeHtml(c.category)}) · ${c.dropped?"DROP":escapeHtml(c.level)+" LEVEL"} · ${c.dropped?"DROP":escapeHtml(stageLabel(c.stage))}</div>
+      <table><tr><th style="width:110px;">날짜</th><th>진행 내용</th></tr>${histRows}</table>
+    `;
+  }).join("");
+  specWindowShell("영업자별 현황 · "+name, body || "<div class='note'>담당 업체가 없어요.</div>", "GIT Green IT Korea · 영업자별 담당 업체 현황 ("+companies.length+"개)");
+}
+
+function exportAssigneeExcel(name, companies){
+  const rows = [["업체명","공종","레벨","진행단계","날짜","진행 내용"]];
+  companies.forEach(c=>{
+    const hist = (c.history||[]).slice().sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+    if(hist.length===0){
+      rows.push([c.name, c.category, c.dropped?"DROP":c.level, c.dropped?"DROP":stageLabel(c.stage), "", ""]);
+    } else {
+      hist.forEach(h=>{
+        rows.push([c.name, c.category, c.dropped?"DROP":c.level, c.dropped?"DROP":stageLabel(c.stage), h.date||"", h.text]);
+      });
+    }
+  });
+  const csv = rows.map(r=>r.map(csvEscape).join(",")).join("\r\n");
+  downloadBlob("\uFEFF"+csv, "MAS_영업자현황_"+name+"_"+today()+".csv", "text/csv;charset=utf-8;");
+  showToast("다운로드했어요");
+}
+
+
+/* ===================== 업체별 제품정보 ===================== */
+function renderProductInfo(){
+  const wrap = el("div");
+  wrap.appendChild(el("div",{class:"topbar"},
+    el("div",null, el("h1",null,"업체별 제품정보"), el("div",{class:"sub"},"공종별 제품명·모델명·공급단가를 관리해요. 값을 수정하면 자동 저장됩니다."))
+  ));
+
+  const tabs = el("div",{class:"seg"});
+  PRODUCT_CATEGORIES.forEach(cat=>{
+    tabs.appendChild(el("button",{class:"seg-btn"+(STATE.productViewCategory===cat?" active":""), onclick:()=>{STATE.productViewCategory=cat; render();}}, cat));
+  });
+  wrap.appendChild(tabs);
+
+  const holder = el("div",{style:"margin-top:14px;"});
+  wrap.appendChild(holder);
+  renderProductTable(holder, STATE.productViewCategory);
+
+  return wrap;
+}
+
+function renderProductTable(holder, cat){
+  holder.innerHTML = "";
+  if(!STATE.productInfo[cat]) STATE.productInfo[cat] = [];
+  const list = STATE.productInfo[cat];
+
+  const table = el("table",{class:"pipeline-table"});
+  table.appendChild(el("tr",null, el("th",null,"제품명"), el("th",null,"우리제품명"), el("th",null,"MAS공급가(VAT포함)"), el("th",null,"시료공급가(VAT포함)"), el("th",null,"")));
+  list.forEach((p, idx)=>{
+    table.appendChild(el("tr",null,
+      el("td",null, editableCell(p.name, v=>{ p.name=v; debouncedSaveProduct(); })),
+      el("td",null, editableCell(p.model, v=>{ p.model=v; debouncedSaveProduct(); })),
+      el("td",null, editableCell(p.masPrice, v=>{ p.masPrice=v; debouncedSaveProduct(); }, "number")),
+      el("td",null, editableCell(p.samplePrice, v=>{ p.samplePrice=v; debouncedSaveProduct(); }, "number")),
+      el("td",null, el("button",{class:"history-del", onclick:()=>{ list.splice(idx,1); renderProductTable(holder,cat); saveProductInfo(); }}, "삭제"))
+    ));
+  });
+  if(list.length===0){
+    holder.appendChild(el("div",{class:"empty-state", style:"margin-bottom:10px;"}, el("b",null,"등록된 제품이 없어요."), el("div",null,"아래 버튼으로 행을 추가해 주세요.")));
+  }
+  holder.appendChild(table);
+  holder.appendChild(el("button",{class:"btn-ghost btn-sm", style:"margin-top:10px;", onclick:()=>{
+    list.push({ name:"", model:"", masPrice:"", samplePrice:"" });
+    renderProductTable(holder, cat);
+  }}, "+ 행 추가"));
+}
+
+function editableCell(value, onChange, type){
+  const input = el("input",{type: type||"text", style:"width:100%;border:none;background:transparent;padding:4px;font-size:13px;"});
+  input.value = (value===undefined || value===null) ? "" : value;
+  input.addEventListener("change", (e)=>{
+    onChange(type==="number" ? (e.target.value===""?"":Number(e.target.value)) : e.target.value);
+  });
+  return input;
+}
+
+let _productSaveTimer = null;
+function debouncedSaveProduct(){
+  clearTimeout(_productSaveTimer);
+  _productSaveTimer = setTimeout(()=> saveProductInfo(), 600);
+}
+
+/* ===================== 견적서 작성 ===================== */
+function freshQuoteForm(){
+  return {
+    id:"", date: today(), clientName:"", projectName:"",
+    salesRep:"", quoteRep:"", deliveryPlace:"지정장소", validPeriod:"견적 후 1개월", paymentTerms:"선결제",
+    items: [], totalAmount:0, createdAt:""
+  };
+}
+function computeQuoteTotal(items){
+  return (items||[]).reduce((sum,it)=> sum + (Number(it.qty)||0)*(Number(it.unitPrice)||0), 0);
+}
+function formatWon(n){ return (Number(n)||0).toLocaleString("ko-KR")+"원"; }
+
+function renderQuoteBuilder(){
+  if(!STATE.quoteForm) STATE.quoteForm = freshQuoteForm();
+  const f = STATE.quoteForm;
+  const wrap = el("div");
+  wrap.appendChild(el("div",{class:"topbar"},
+    el("div",null, el("h1",null,"견적서 작성"), el("div",{class:"sub"},"날짜와 거래처명으로 저장되고, 저장된 견적서는 아래에서 다시 불러올 수 있어요"))
+  ));
+
+  // 저장된 견적서 검색
+  const savedSec = el("div",{class:"intake-card", style:"max-width:100%;margin-bottom:16px;"});
+  savedSec.appendChild(el("div",{class:"intake-sec-title"}, el("span",{class:"mark"},"■"), "저장된 견적서"));
+  const searchInput = el("input",{type:"text", placeholder:"날짜 또는 거래처명으로 검색", style:"width:280px;"});
+  searchInput.value = STATE.quoteSearchQuery;
+  const quoteListHolder = el("div",{style:"margin-top:10px;"});
+  searchInput.addEventListener("input",(e)=>{ STATE.quoteSearchQuery=e.target.value; renderQuoteList(); });
+  savedSec.appendChild(searchInput);
+  savedSec.appendChild(quoteListHolder);
+  wrap.appendChild(savedSec);
+
+  function renderQuoteList(){
+    quoteListHolder.innerHTML = "";
+    const q = STATE.quoteSearchQuery.trim();
+    let list = STATE.quotes.slice().sort((a,b)=> (b.date||"").localeCompare(a.date||""));
+    if(q) list = list.filter(x=> (x.date||"").includes(q) || (x.clientName||"").includes(q));
+    if(list.length===0){
+      quoteListHolder.appendChild(el("div",{style:"font-size:12.5px;color:var(--ink-soft);padding:6px 0;"}, "저장된 견적서가 없어요."));
+      return;
+    }
+    const table = el("table",{class:"pipeline-table"});
+    table.appendChild(el("tr",null, el("th",null,"일자"), el("th",null,"거래처명"), el("th",null,"건명"), el("th",null,"합계금액"), el("th",null,"")));
+    list.forEach(qt=>{
+      table.appendChild(el("tr",{onclick:()=>{ STATE.quoteForm = JSON.parse(JSON.stringify(qt)); render(); }},
+        el("td",null, qt.date||"-"),
+        el("td",{class:"company-name-cell"}, qt.clientName||"-"),
+        el("td",null, qt.projectName||"-"),
+        el("td",null, formatWon(qt.totalAmount)),
+        el("td",null, el("button",{class:"history-del", onclick:(e)=>{
+          e.stopPropagation();
+          if(!window.confirm("["+qt.clientName+"] 견적서를 삭제할까요?")) return;
+          deleteQuoteFromServer(qt.id).then(()=>{ loadQuotes(); showToast("삭제했어요"); });
+        }}, "삭제"))
+      ));
+    });
+    quoteListHolder.appendChild(table);
+  }
+  renderQuoteList();
+
+  // 견적 입력 폼
+  const card = el("div",{class:"intake-card", style:"max-width:100%;"});
+  card.appendChild(el("div",{class:"intake-sec-title"}, el("span",{class:"mark"},"■"), "견적 정보"));
+  const g1 = el("div",{class:"intake-grid"});
+  g1.appendChild(field("견적번호", icText(f.id, v=>f.id=v, "예) GIT-260812-001")));
+  const dateInput = el("input",{type:"date"}); dateInput.value = f.date; dateInput.addEventListener("input",e=>f.date=e.target.value);
+  g1.appendChild(field("일자", dateInput));
+  const clientList = el("datalist",{id:"quote-client-datalist"});
+  Array.from(new Set(STATE.companies.map(c=>c.name))).forEach(n=> clientList.appendChild(el("option",{value:n})));
+  const clientInput = icText(f.clientName, v=>f.clientName=v, "거래처명");
+  clientInput.setAttribute("list","quote-client-datalist");
+  g1.appendChild(field("수신(거래처명)", clientInput));
+  g1.appendChild(clientList);
+  g1.appendChild(field("건명", icText(f.projectName, v=>f.projectName=v)));
+
+  const salesRepList = el("datalist",{id:"staff-datalist"});
+  GIT_STAFF.forEach(s=> salesRepList.appendChild(el("option",{value:s.name})));
+  const salesRepInput = icText(f.salesRep, v=>f.salesRep=v, "이름 입력 또는 목록에서 선택");
+  salesRepInput.setAttribute("list","staff-datalist");
+  g1.appendChild(field("영업 담당자", salesRepInput));
+  const quoteRepInput = icText(f.quoteRep, v=>f.quoteRep=v, "이름 입력 또는 목록에서 선택");
+  quoteRepInput.setAttribute("list","staff-datalist");
+  g1.appendChild(field("견적 담당자", quoteRepInput));
+  g1.appendChild(salesRepList);
+
+  g1.appendChild(field("납품장소", icText(f.deliveryPlace, v=>f.deliveryPlace=v)));
+  g1.appendChild(field("견적유효기간", icText(f.validPeriod, v=>f.validPeriod=v)));
+  g1.appendChild(field("결제조건", icText(f.paymentTerms, v=>f.paymentTerms=v)));
+  card.appendChild(g1);
+
+  // 품목
+  card.appendChild(el("div",{class:"intake-sec-title", style:"margin-top:20px;"}, el("span",{class:"mark"},"■"), "견적 품목"));
+  const itemsHolder = el("div");
+  card.appendChild(itemsHolder);
+  const totalLine = el("div",{class:"quote-total-line"});
+  card.appendChild(totalLine);
+  card.appendChild(el("button",{class:"btn-ghost btn-sm", style:"margin-top:8px;", onclick:()=>{
+    f.items.push({ category:PRODUCT_CATEGORIES[0], name:"", model:"", qty:1, unitPrice:"" });
+    renderItemsTable();
+  }}, "+ 항목 추가"));
+
+  function renderItemsTable(){
+    itemsHolder.innerHTML = "";
+    if(f.items.length===0){
+      itemsHolder.appendChild(el("div",{style:"color:var(--ink-soft);font-size:12.5px;padding:6px 0;"}, "추가된 품목이 없어요."));
+    } else {
+      const table = el("table",{class:"pipeline-table"});
+      table.appendChild(el("tr",null, el("th",null,"공종"), el("th",null,"제품"), el("th",null,"수량"), el("th",null,"단가"), el("th",null,"금액"), el("th",null,"")));
+      f.items.forEach((item,idx)=> table.appendChild(buildQuoteItemRow(item, idx)));
+      itemsHolder.appendChild(table);
+    }
+    const total = computeQuoteTotal(f.items);
+    totalLine.innerHTML = "";
+    totalLine.appendChild(el("span",null,"합계금액 (VAT포함): "));
+    totalLine.appendChild(el("span",{style:"font-weight:800;font-size:16px;color:var(--teal);"}, formatWon(total)));
+  }
+  function buildQuoteItemRow(item, idx){
+    const catSelect = el("select",null);
+    PRODUCT_CATEGORIES.forEach(cat=>{
+      const opt = el("option",{value:cat}, cat);
+      if(item.category===cat) opt.setAttribute("selected","selected");
+      catSelect.appendChild(opt);
+    });
+    catSelect.addEventListener("change",(e)=>{ item.category=e.target.value; item.name=""; item.model=""; item.unitPrice=""; renderItemsTable(); });
+
+    const prodSelect = el("select",null);
+    prodSelect.appendChild(el("option",{value:""}, "제품 선택"));
+    (STATE.productInfo[item.category]||[]).forEach((p,i)=>{
+      const opt = el("option",{value:String(i)}, p.name+(p.model?" ("+p.model+")":""));
+      if(item.name===p.name) opt.setAttribute("selected","selected");
+      prodSelect.appendChild(opt);
+    });
+    prodSelect.addEventListener("change",(e)=>{
+      const p = (STATE.productInfo[item.category]||[])[Number(e.target.value)];
+      if(p){ item.name=p.name; item.model=p.model; item.unitPrice = p.masPrice===""?"":Number(p.masPrice); }
+      renderItemsTable();
+    });
+
+    const qtyInput = el("input",{type:"number", min:"1", style:"width:60px;"});
+    qtyInput.value = item.qty||1;
+    qtyInput.addEventListener("input",(e)=>{ item.qty = Number(e.target.value)||0; renderItemsTable(); });
+
+    const priceInput = el("input",{type:"number", style:"width:110px;"});
+    priceInput.value = item.unitPrice===undefined? "" : item.unitPrice;
+    priceInput.addEventListener("input",(e)=>{ item.unitPrice = e.target.value===""?"":Number(e.target.value); renderItemsTable(); });
+
+    const amount = (Number(item.qty)||0) * (Number(item.unitPrice)||0);
+    return el("tr",null,
+      el("td",null, catSelect),
+      el("td",null, prodSelect),
+      el("td",null, qtyInput),
+      el("td",null, priceInput),
+      el("td",null, formatWon(amount)),
+      el("td",null, el("button",{class:"history-del", onclick:()=>{ f.items.splice(idx,1); renderItemsTable(); }}, "삭제"))
+    );
+  }
+  renderItemsTable();
+
+  const actions = el("div",{class:"intake-actions"},
+    el("button",{class:"btn-primary", onclick:async ()=>{
+      if(!f.clientName.trim()){ showToast("거래처명을 입력해 주세요"); return; }
+      if(!f.date){ showToast("일자를 입력해 주세요"); return; }
+      f.id = f.date+"_"+f.clientName.trim().replace(/\s+/g,"");
+      f.totalAmount = computeQuoteTotal(f.items);
+      if(!f.createdAt) f.createdAt = new Date().toISOString();
+      const ok = await saveQuoteToServer(f);
+      if(ok){ showToast("["+f.clientName+"] 견적서를 저장했어요"); await loadQuotes(); }
+    }}, "💾 저장하기 (날짜+거래처명)"),
+    el("button",{class:"btn-ghost", onclick:()=>openQuotePrintView(f)}, "🖨 인쇄 / PDF로 보기"),
+    el("button",{class:"btn-ghost", onclick:()=>exportQuoteExcel(f)}, "⬇ Excel(CSV) 다운로드"),
+    el("button",{class:"btn-ghost", onclick:()=>{ STATE.quoteForm = freshQuoteForm(); render(); }}, "새 견적 작성(초기화)"),
+  );
+  card.appendChild(actions);
+
+  wrap.appendChild(card);
+  return wrap;
+}
+
+function openQuotePrintView(f){
+  const rows = (f.items||[]).map((it,i)=>
+    "<tr><td>"+(i+1)+"</td><td class='left'>"+escapeHtml(it.name||"")+"</td><td>"+escapeHtml(it.model||"")+"</td><td>"+(it.qty||0)+"</td><td>"+formatWon(it.unitPrice)+"</td><td>"+formatWon((it.qty||0)*(it.unitPrice||0))+"</td></tr>"
+  ).join("");
+  const total = computeQuoteTotal(f.items);
+  specWindowShell("견적서 · "+f.clientName, `
+    <table>
+      <tr><th>견적번호</th><td>${escapeHtml(f.id)}</td><th>일자</th><td>${escapeHtml(f.date)}</td></tr>
+      <tr><th>수신</th><td>${escapeHtml(f.clientName)} 귀하</td><th>건명</th><td>${escapeHtml(f.projectName)}</td></tr>
+      <tr><th>영업 담당자</th><td>${escapeHtml(f.salesRep)}</td><th>견적 담당자</th><td>${escapeHtml(f.quoteRep)}</td></tr>
+      <tr><th>납품장소</th><td>${escapeHtml(f.deliveryPlace)}</td><th>견적유효기간</th><td>${escapeHtml(f.validPeriod)}</td></tr>
+      <tr><th>결제조건</th><td colspan="3">${escapeHtml(f.paymentTerms)}</td></tr>
+      <tr><th>합계금액</th><td colspan="3" style="font-weight:800;font-size:14px;">${formatWon(total)} (VAT포함)</td></tr>
+    </table>
+    <table>
+      <tr><th>No</th><th>품명</th><th>모델명</th><th>수량</th><th>단가</th><th>금액</th></tr>
+      ${rows || "<tr><td colspan='6'>등록된 항목이 없습니다.</td></tr>"}
+    </table>
+  `, "GIT Green IT Korea · 견적서");
+}
+
+function exportQuoteExcel(f){
+  const rows = [
+    ["견적번호", f.id], ["일자", f.date], ["수신", f.clientName], ["건명", f.projectName],
+    ["영업담당자", f.salesRep], ["견적담당자", f.quoteRep], ["납품장소", f.deliveryPlace],
+    ["견적유효기간", f.validPeriod], ["결제조건", f.paymentTerms], []
+  ];
+  rows.push(["No","품명","모델명","수량","단가","금액"]);
+  (f.items||[]).forEach((it,i)=> rows.push([i+1, it.name||"", it.model||"", it.qty||0, it.unitPrice||0, (it.qty||0)*(it.unitPrice||0)]));
+  rows.push([]);
+  rows.push(["합계금액","","","","", computeQuoteTotal(f.items)]);
+  const csv = rows.map(r=>r.map(csvEscape).join(",")).join("\r\n");
+  downloadBlob("\uFEFF"+csv, "견적서_"+(f.clientName||"무제")+"_"+f.date+".csv", "text/csv;charset=utf-8;");
+  showToast("다운로드했어요");
+}
+
+
 /* ===================== 모달 (상세/추가) ===================== */
 function renderModal(){
   const isNew = STATE.addingNew;
@@ -2434,6 +2974,8 @@ if("serviceWorker" in navigator){
   });
 }
 loadData();
+loadProductInfo();
+loadQuotes();
 </script>
 </body>
 </html>
