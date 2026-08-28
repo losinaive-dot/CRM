@@ -2309,10 +2309,31 @@ function renderProductInfo(){
   });
   wrap.appendChild(tabs);
 
-  // 업체 선택
-  const companySec = el("div",{class:"search-row", style:"margin-top:14px;"});
   const companyCat = PRODUCT_TO_COMPANY_CAT[STATE.productViewCategory];
   const companies = STATE.companies.filter(c=>c.category===companyCat).sort((a,b)=>a.name.localeCompare(b.name,"ko"));
+
+  // 이미 업체제품명이 등록된 업체 목록 (버튼으로 바로 선택)
+  const registered = companies.filter(c=> c.productNames && Object.values(c.productNames).some(v=> v && String(v).trim()!==""));
+  const registeredWrap = el("div",{style:"margin-top:14px;"});
+  registeredWrap.appendChild(el("div",{style:"font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:6px;"}, "등록된 업체제품명 ("+registered.length+"개 업체)"));
+  const chipRow = el("div",{style:"display:flex;flex-wrap:wrap;gap:6px;align-items:center;"});
+  if(registered.length===0){
+    chipRow.appendChild(el("span",{style:"font-size:12px;color:var(--ink-soft);"}, "아직 등록된 업체제품명이 없어요."));
+  } else {
+    registered.forEach(c=>{
+      chipRow.appendChild(el("span",{
+        class:"assignee-chip"+(STATE.productViewCompanyId===c.id?"":" empty"),
+        style:"cursor:pointer;",
+        onclick:()=>{ STATE.productViewCompanyId=c.id; render(); }
+      }, c.name));
+    });
+  }
+  chipRow.appendChild(el("button",{class:"btn-ghost btn-sm", onclick:()=>{ STATE.productViewCompanyId=""; render(); }}, "+ 새로 등록하기"));
+  registeredWrap.appendChild(chipRow);
+  wrap.appendChild(registeredWrap);
+
+  // 업체 선택
+  const companySec = el("div",{class:"search-row", style:"margin-top:14px;"});
   const companySelect = el("select",{style:"min-width:220px;"});
   companySelect.appendChild(el("option",{value:""}, "업체 선택 (선택 시 업체제품명 입력 가능)"));
   companies.forEach(c=>{
