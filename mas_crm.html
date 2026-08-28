@@ -386,6 +386,9 @@ const STAGES = [
 ];
 const LEVELS = ["A","B","C"];
 const PRODUCT_CATEGORIES = ["영상감시","주차관제","출입통제","비상벨"];
+const DISCOUNT_RATE_OPTIONS = [0,1,2,3,5,10,15,20,25,30];
+// 업체별 제품정보 화면에서 업체를 고를 때, 제품 공종을 업체관리 화면의 공종명으로 매핑
+const PRODUCT_TO_COMPANY_CAT = { "영상감시":"영상", "주차관제":"주차", "출입통제":"출입", "비상벨":"비상벨" };
 
 const SEED_PRODUCTS = [{"category": "주차관제", "name": "주차주제어장치 / 차량번호관리컴퓨터", "model": "G-PST100A", "masPrice": 2960000, "samplePrice": ""}, {"category": "주차관제", "name": "주차요금계산기 / 사전정산기/카드전용/BF인증", "model": "GIT-PC25-BF", "masPrice": 6400000, "samplePrice": ""}, {"category": "주차관제", "name": "주차요금계산기 / 출구정산기/카드전용/BF인증", "model": "GIT-PC25-BC", "masPrice": 6160000, "samplePrice": ""}, {"category": "주차관제", "name": "차량인식기 / 차량번호인식(LPR)/단방향/전광판일체형", "model": "GIT-PL25-OI", "masPrice": 3280000, "samplePrice": ""}, {"category": "주차관제", "name": "차량인식기 / 보조차량인식기", "model": "GIT-PL25-BI", "masPrice": 1600000, "samplePrice": ""}, {"category": "주차관제", "name": "차량차단기 / 통합차단기(차단기+LPR)", "model": "GIT-PB25-IJ", "masPrice": 3400000, "samplePrice": ""}, {"category": "주차관제", "name": "차량차단기 / 단독차단기", "model": "GIT-PB25D-IJ", "masPrice": 976000, "samplePrice": ""}, {"category": "주차관제", "name": "주차안내판 / 입구만차등(1단)", "model": "GIT-PIN100", "masPrice": 812500, "samplePrice": ""}, {"category": "주차관제", "name": "주차안내판 / 입구만차등(4단)", "model": "GIT-PI026-IM4", "masPrice": 1925000, "samplePrice": ""}, {"category": "주차관제", "name": "주차안내판 / 입구만차등(8단)", "model": "GIT-PI026-IM8", "masPrice": 2379688, "samplePrice": ""}, {"category": "비상벨", "name": "비상벨서버(리눅스) / GIT-STR06L", "model": "GIT-STR06L", "masPrice": 1801250, "samplePrice": ""}, {"category": "비상벨", "name": "비상벨서버(100ch) / GM-SSUYC20I", "model": "GM-SSUYC20I", "masPrice": 775000, "samplePrice": ""}, {"category": "비상벨", "name": "방송수신기(실외) / GIT-CB06-GW", "model": "GIT-CB06-GW", "masPrice": 487150, "samplePrice": ""}, {"category": "비상벨", "name": "ip전화기 / LIP-1010i", "model": "LIP-1010i", "masPrice": 151250, "samplePrice": ""}, {"category": "비상벨", "name": "IP전화기(화상) / IPECS-1080i", "model": "IPECS-1080i", "masPrice": 762300, "samplePrice": ""}, {"category": "비상벨", "name": "무선(화장실) / GIT-CA25-MB", "model": "GIT-CA25-MB", "masPrice": 137000, "samplePrice": ""}, {"category": "비상벨", "name": "실내형(중계) / GIT-CA25-BS", "model": "GIT-CA25-BS", "masPrice": 474000, "samplePrice": ""}, {"category": "비상벨", "name": "실내형(주차,중계X) / GIT-CA25B-BS", "model": "GIT-CA25B-BS", "masPrice": 402000, "samplePrice": ""}, {"category": "비상벨", "name": "실외형(AI, 게이트웨이) / GIT-CA25-BP", "model": "GIT-CA25-BP", "masPrice": 653000, "samplePrice": ""}, {"category": "비상벨", "name": "실외형(버튼,게이트웨이) / GIT-CA25B-BP", "model": "GIT-CA25B-BP", "masPrice": 507000, "samplePrice": ""}, {"category": "출입통제", "name": "단말기(EST) / 카드리더기", "model": "ABR128P", "masPrice": 156750, "samplePrice": ""}, {"category": "출입통제", "name": "ACU(EST) / 4Ch", "model": "BCS-TC4", "masPrice": 579700, "samplePrice": ""}, {"category": "출입통제", "name": "ACU(EST) / 8Ch", "model": "BCS-TC8", "masPrice": 1166000, "samplePrice": ""}, {"category": "출입통제", "name": "단말기(성현) / 카드리더기", "model": "", "masPrice": "", "samplePrice": ""}, {"category": "출입통제", "name": "ACU(성현) / 2CH", "model": "", "masPrice": "", "samplePrice": ""}, {"category": "출입통제", "name": "ACU(성현) / 4CH", "model": "", "masPrice": "", "samplePrice": ""}, {"category": "출입통제", "name": "출입통제서버 / GIT-STR06L", "model": "", "masPrice": 1240250, "samplePrice": ""}, {"category": "출입통제", "name": "카드 등록기 / GIT-AG200", "model": "", "masPrice": 206250, "samplePrice": ""}, {"category": "출입통제", "name": "지문+카드리더기 / GM-AFG128B", "model": "", "masPrice": 460625, "samplePrice": ""}, {"category": "출입통제", "name": "얼굴인식기 / GIT-AFI100B", "model": "", "masPrice": 1306250, "samplePrice": ""}, {"category": "출입통제", "name": "얼굴+지문인식기 / GIT-AFI200", "model": "", "masPrice": 742500, "samplePrice": ""}, {"category": "출입통제", "name": "카드리더기 / GIT-ARC101W", "model": "", "masPrice": 96250, "samplePrice": ""}, {"category": "출입통제", "name": "스트라이커 / GIT-GS500", "model": "", "masPrice": 66000, "samplePrice": ""}, {"category": "출입통제", "name": "스트라이커 / GIT-GS1000", "model": "", "masPrice": 220000, "samplePrice": ""}, {"category": "출입통제", "name": "스트라이커 / GIT-GS3000", "model": "", "masPrice": 171875, "samplePrice": ""}, {"category": "출입통제", "name": "데드볼트 / GIT-GD1000", "model": "", "masPrice": 61875, "samplePrice": ""}, {"category": "출입통제", "name": "E/M Lock / GIT-GE1000", "model": "", "masPrice": 61875, "samplePrice": ""}, {"category": "출입통제", "name": "E/M Lock / GIT-GE5000", "model": "", "masPrice": 137500, "samplePrice": ""}, {"category": "출입통제", "name": "도어루프(매립형) / GIT-DH100RC", "model": "", "masPrice": 15125, "samplePrice": ""}, {"category": "출입통제", "name": "도어루프(노출형) / GIT-DH100EP", "model": "", "masPrice": 13750, "samplePrice": ""}, {"category": "출입통제", "name": "퇴실버튼 / GIT-GB10", "model": "", "masPrice": 8250, "samplePrice": ""}, {"category": "출입통제", "name": "퇴실버튼 / G-GB50", "model": "", "masPrice": 11000, "samplePrice": ""}, {"category": "출입통제", "name": "퇴실버튼 / G-GB500", "model": "", "masPrice": 13750, "samplePrice": ""}, {"category": "출입통제", "name": "컨트롤러 / GIT-AIO", "model": "", "masPrice": 61875, "samplePrice": ""}, {"category": "출입통제", "name": "컴퓨터서버 / GIT-WSPC-NR1", "model": "", "masPrice": 1996500, "samplePrice": ""}, {"category": "출입통제", "name": "모바일카드리더기 / GIT-ABR128A", "model": "", "masPrice": 134750, "samplePrice": ""}, {"category": "출입통제", "name": "네트워크스위치 / GIT-CH08P", "model": "", "masPrice": 246125, "samplePrice": ""}, {"category": "출입통제", "name": "액정모니터 / GIT-CM215HAR", "model": "", "masPrice": 233750, "samplePrice": ""}, {"category": "출입통제", "name": "브래킷 / GIT-GEB1000", "model": "", "masPrice": 27500, "samplePrice": ""}];
 
@@ -400,7 +403,7 @@ function mk(category, name, level, stage, dropped, dropNote){
     category, name, level: level||"B", stage: stage||"consult",
     dropped: !!dropped, dropNote: dropNote||"",
     assignee:"", address:"", ceoName:"", ceoPhone:"", managerName:"", managerPhone:"", managerEmail:"",
-    businessCard:"", checklist:[], intake:null, attachments:[],
+    businessCard:"", checklist:[], intake:null, attachments:[], productNames:{},
     history: dropped ? [{date: today(), text:"DROP 처리됨"+(dropNote?(" - "+dropNote):"")}] : [],
   };
 }
@@ -465,7 +468,7 @@ let STATE = { companies: [], view: "dashboard", filterLevel:"", filterStage:"", 
   calendarMode:"month", calendarDate:ymd(new Date()), calendarShowAll:false,
   reportMode:"week", reportWeekKey:"", reportMonthKey:"",
   assigneeViewSelected:"", assigneeViewCompanyQuery:"", assigneeExpanded:{},
-  productInfo:{ "영상감시":[], "주차관제":[], "출입통제":[], "비상벨":[] }, productViewCategory:"주차관제",
+  productInfo:{ "영상감시":[], "주차관제":[], "출입통제":[], "비상벨":[] }, productViewCategory:"주차관제", productViewCompanyId:"",
   quotes:[], quoteForm:null, quoteSearchQuery:"" };
 
 function freshIntakeForm(){
@@ -495,7 +498,7 @@ async function loadData(){
     const res = await fetch(SHEETS_URL, { method: "GET" });
     const data = await res.json();
     if(data && data.ok && Array.isArray(data.companies) && data.companies.length > 0){
-      STATE.companies = data.companies.map(c=>Object.assign({businessCard:"", checklist:[], managerEmail:"", intake:null, attachments:[]}, c));
+      STATE.companies = data.companies.map(c=>Object.assign({businessCard:"", checklist:[], managerEmail:"", intake:null, attachments:[], productNames:{}}, c));
     } else {
       // 시트가 비어있으면 초기 데이터로 채워서 그대로 시트에 저장해둔다.
       STATE.companies = buildSeed();
@@ -2297,14 +2300,32 @@ function exportAssigneeExcel(name, companies){
 function renderProductInfo(){
   const wrap = el("div");
   wrap.appendChild(el("div",{class:"topbar"},
-    el("div",null, el("h1",null,"업체별 제품정보"), el("div",{class:"sub"},"공종별 제품명·모델명·공급단가를 관리해요. 값을 수정하면 자동 저장됩니다."))
+    el("div",null, el("h1",null,"업체별 제품정보"), el("div",{class:"sub"},"공종별 품목·단가는 자동 저장되고, 업체제품명은 업체를 선택한 뒤 저장 버튼으로 반영돼요."))
   ));
 
   const tabs = el("div",{class:"seg"});
   PRODUCT_CATEGORIES.forEach(cat=>{
-    tabs.appendChild(el("button",{class:"seg-btn"+(STATE.productViewCategory===cat?" active":""), onclick:()=>{STATE.productViewCategory=cat; render();}}, cat));
+    tabs.appendChild(el("button",{class:"seg-btn"+(STATE.productViewCategory===cat?" active":""), onclick:()=>{STATE.productViewCategory=cat; STATE.productViewCompanyId=""; render();}}, cat));
   });
   wrap.appendChild(tabs);
+
+  // 업체 선택
+  const companySec = el("div",{class:"search-row", style:"margin-top:14px;"});
+  const companyCat = PRODUCT_TO_COMPANY_CAT[STATE.productViewCategory];
+  const companies = STATE.companies.filter(c=>c.category===companyCat).sort((a,b)=>a.name.localeCompare(b.name,"ko"));
+  const companySelect = el("select",{style:"min-width:220px;"});
+  companySelect.appendChild(el("option",{value:""}, "업체 선택 (선택 시 업체제품명 입력 가능)"));
+  companies.forEach(c=>{
+    const opt = el("option",{value:c.id}, c.name);
+    if(STATE.productViewCompanyId===c.id) opt.setAttribute("selected","selected");
+    companySelect.appendChild(opt);
+  });
+  companySelect.addEventListener("change",(e)=>{ STATE.productViewCompanyId=e.target.value; render(); });
+  companySec.appendChild(el("div",{class:"search-field"}, el("label",null,"업체명 ("+STATE.productViewCategory+" 공종)"), companySelect));
+  wrap.appendChild(companySec);
+  if(companies.length===0){
+    wrap.appendChild(el("div",{style:"font-size:11.5px;color:var(--ink-soft);margin-top:6px;"}, "이 공종("+companyCat+")에 등록된 업체가 없어요. 먼저 "+companyCat+" 메뉴에서 업체를 등록해 주세요."));
+  }
 
   const holder = el("div",{style:"margin-top:14px;"});
   wrap.appendChild(holder);
@@ -2317,12 +2338,21 @@ function renderProductTable(holder, cat){
   holder.innerHTML = "";
   if(!STATE.productInfo[cat]) STATE.productInfo[cat] = [];
   const list = STATE.productInfo[cat];
+  const company = STATE.productViewCompanyId ? STATE.companies.find(c=>c.id===STATE.productViewCompanyId) : null;
 
   const table = el("table",{class:"pipeline-table"});
-  table.appendChild(el("tr",null, el("th",null,"제품명"), el("th",null,"우리제품명"), el("th",null,"MAS공급가(VAT포함)"), el("th",null,"시료공급가(VAT포함)"), el("th",null,"")));
+  table.appendChild(el("tr",null, el("th",null,"품목"), el("th",null,"업체제품명"), el("th",null,"GIT제품명"), el("th",null,"MAS공급가(VAT포함)"), el("th",null,"시료공급가(VAT포함)"), el("th",null,"")));
   list.forEach((p, idx)=>{
+    let companyNameCell;
+    if(!company){
+      companyNameCell = el("input",{type:"text", placeholder:"업체를 먼저 선택하세요", disabled:"disabled", style:"width:100%;border:none;background:transparent;padding:4px;font-size:13px;color:#B5BBC2;"});
+    } else {
+      if(!company.productNames) company.productNames = {};
+      companyNameCell = editableCell(company.productNames[p.name]||"", v=>{ company.productNames[p.name]=v; });
+    }
     table.appendChild(el("tr",null,
       el("td",null, editableCell(p.name, v=>{ p.name=v; debouncedSaveProduct(); })),
+      el("td",null, companyNameCell),
       el("td",null, editableCell(p.model, v=>{ p.model=v; debouncedSaveProduct(); })),
       el("td",null, editableCell(p.masPrice, v=>{ p.masPrice=v; debouncedSaveProduct(); }, "number")),
       el("td",null, editableCell(p.samplePrice, v=>{ p.samplePrice=v; debouncedSaveProduct(); }, "number")),
@@ -2333,10 +2363,19 @@ function renderProductTable(holder, cat){
     holder.appendChild(el("div",{class:"empty-state", style:"margin-bottom:10px;"}, el("b",null,"등록된 제품이 없어요."), el("div",null,"아래 버튼으로 행을 추가해 주세요.")));
   }
   holder.appendChild(table);
-  holder.appendChild(el("button",{class:"btn-ghost btn-sm", style:"margin-top:10px;", onclick:()=>{
+
+  const btnRow = el("div",{style:"display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;"});
+  btnRow.appendChild(el("button",{class:"btn-ghost btn-sm", onclick:()=>{
     list.push({ name:"", model:"", masPrice:"", samplePrice:"" });
     renderProductTable(holder, cat);
   }}, "+ 행 추가"));
+  if(company){
+    btnRow.appendChild(el("button",{class:"btn-primary btn-sm", onclick:()=>{
+      saveData();
+      showToast("["+company.name+"] 업체제품명을 저장했어요");
+    }}, "💾 "+company.name+" 업체제품명 저장"));
+  }
+  holder.appendChild(btnRow);
 }
 
 function editableCell(value, onChange, type){
@@ -2539,9 +2578,13 @@ function renderQuoteBuilder(){
     priceInput.value = item.unitPrice===undefined? "" : item.unitPrice;
     priceInput.addEventListener("input",(e)=>{ item.unitPrice = e.target.value===""?"":Number(e.target.value); renderItemsTable(); });
 
-    const discountInput = el("input",{type:"number", min:"0", max:"100", style:"width:70px;"});
-    discountInput.value = item.discountRate===undefined? 0 : item.discountRate;
-    discountInput.addEventListener("input",(e)=>{ item.discountRate = e.target.value===""?0:Number(e.target.value); renderItemsTable(); });
+    const discountInput = el("select",null);
+    DISCOUNT_RATE_OPTIONS.forEach(rate=>{
+      const opt = el("option",{value:String(rate)}, rate+"%");
+      if(Number(item.discountRate||0)===rate) opt.setAttribute("selected","selected");
+      discountInput.appendChild(opt);
+    });
+    discountInput.addEventListener("change",(e)=>{ item.discountRate = Number(e.target.value); renderItemsTable(); });
 
     const amount = (Number(item.qty)||0) * (Number(item.unitPrice)||0);
     const discountAmount = amount * (1 - (Number(item.discountRate)||0)/100);
