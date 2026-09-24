@@ -12,6 +12,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="MAS영업">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
   @import url('https://cdnjs.cloudflare.com/ajax/libs/pretendard/1.3.9/static/pretendard.min.css');
 
@@ -275,6 +277,22 @@
   .assignee-hist-wrap{margin-top:10px; border-top:1px solid var(--line); padding-top:8px;}
   .quote-total-line{margin-top:12px; padding:12px 16px; background:var(--teal-soft); border-radius:8px; font-size:14px;}
 
+  /* 전국지도 */
+  .map-legend{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-soft); margin:12px 0; flex-wrap:wrap;}
+  .map-legend-dot{display:inline-block; width:11px; height:11px; border-radius:50%; margin-right:2px;}
+  .map-layout{display:flex; gap:14px; align-items:flex-start;}
+  .map-container{flex:1; min-width:0; height:560px; border-radius:10px; border:1px solid var(--line); background:#eee;}
+  .map-side-panel{width:360px; max-width:100%; max-height:560px; overflow-y:auto; border:1px solid var(--line); border-radius:10px; padding:14px; background:#fff; flex-shrink:0;}
+  .map-panel-hint{font-size:12.5px; color:var(--ink-soft);}
+  .map-panel-title{font-size:14px; font-weight:800; margin-bottom:4px;}
+  .map-marker-badge{width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:12.5px; border:2px solid #fff; box-shadow:0 2px 6px rgba(0,0,0,0.35);}
+  .korea-map-marker{background:transparent; border:none;}
+  @media (max-width:760px){
+    .map-layout{flex-direction:column;}
+    .map-container{width:100%; height:380px;}
+    .map-side-panel{width:100%; max-height:320px;}
+  }
+
   /* 상담 체크리스트 폼 */
   .intake-card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:20px 22px; max-width:760px;}
   .intake-sec{margin-top:22px; padding-top:16px; border-top:1px solid var(--line);}
@@ -395,6 +413,11 @@ const DISCOUNT_RATE_OPTIONS = [0,1,2,3,5,10,15,20,25,30];
 // 업체별 제품정보 화면에서 업체를 고를 때, 제품 공종을 업체관리 화면의 공종명으로 매핑
 const PRODUCT_TO_COMPANY_CAT = { "영상감시":"영상", "주차관제":"주차", "출입통제":"출입", "비상벨":"비상벨" };
 
+// 전국지도용 시/군/구 좌표 데이터 (주소 텍스트에서 지역명을 찾아 매칭)
+const KOREA_CITIES = [{"name": "서울특별시", "region": "서울", "lat": 37.5665, "lng": 126.978, "hint": null}, {"name": "부산광역시", "region": "부산", "lat": 35.1796, "lng": 129.0756, "hint": null}, {"name": "대구광역시", "region": "대구", "lat": 35.8714, "lng": 128.6014, "hint": null}, {"name": "인천광역시", "region": "인천", "lat": 37.4563, "lng": 126.7052, "hint": null}, {"name": "광주광역시", "region": "광주", "lat": 35.1595, "lng": 126.8526, "hint": null}, {"name": "대전광역시", "region": "대전", "lat": 36.3504, "lng": 127.3845, "hint": null}, {"name": "울산광역시", "region": "울산", "lat": 35.5384, "lng": 129.3114, "hint": null}, {"name": "세종특별자치시", "region": "세종", "lat": 36.4801, "lng": 127.2891, "hint": null}, {"name": "수원시", "region": "경기도", "lat": 37.2636, "lng": 127.0286, "hint": null}, {"name": "성남시", "region": "경기도", "lat": 37.4201, "lng": 127.1265, "hint": null}, {"name": "고양시", "region": "경기도", "lat": 37.6584, "lng": 126.832, "hint": null}, {"name": "용인시", "region": "경기도", "lat": 37.2411, "lng": 127.1776, "hint": null}, {"name": "부천시", "region": "경기도", "lat": 37.5035, "lng": 126.766, "hint": null}, {"name": "안산시", "region": "경기도", "lat": 37.3219, "lng": 126.8309, "hint": null}, {"name": "안양시", "region": "경기도", "lat": 37.3943, "lng": 126.9568, "hint": null}, {"name": "남양주시", "region": "경기도", "lat": 37.636, "lng": 127.2165, "hint": null}, {"name": "화성시", "region": "경기도", "lat": 37.1996, "lng": 126.831, "hint": null}, {"name": "평택시", "region": "경기도", "lat": 36.9921, "lng": 127.1129, "hint": null}, {"name": "의정부시", "region": "경기도", "lat": 37.7381, "lng": 127.0338, "hint": null}, {"name": "시흥시", "region": "경기도", "lat": 37.3799, "lng": 126.8031, "hint": null}, {"name": "파주시", "region": "경기도", "lat": 37.7599, "lng": 126.7801, "hint": null}, {"name": "김포시", "region": "경기도", "lat": 37.6152, "lng": 126.7156, "hint": null}, {"name": "광명시", "region": "경기도", "lat": 37.4784, "lng": 126.8644, "hint": null}, {"name": "군포시", "region": "경기도", "lat": 37.3616, "lng": 126.9351, "hint": null}, {"name": "이천시", "region": "경기도", "lat": 37.2721, "lng": 127.4351, "hint": null}, {"name": "오산시", "region": "경기도", "lat": 37.1499, "lng": 127.0774, "hint": null}, {"name": "하남시", "region": "경기도", "lat": 37.5392, "lng": 127.2148, "hint": null}, {"name": "양주시", "region": "경기도", "lat": 37.7854, "lng": 127.0456, "hint": null}, {"name": "구리시", "region": "경기도", "lat": 37.5943, "lng": 127.1296, "hint": null}, {"name": "안성시", "region": "경기도", "lat": 37.0079, "lng": 127.2795, "hint": null}, {"name": "포천시", "region": "경기도", "lat": 37.8949, "lng": 127.2003, "hint": null}, {"name": "의왕시", "region": "경기도", "lat": 37.3446, "lng": 126.9683, "hint": null}, {"name": "여주시", "region": "경기도", "lat": 37.2984, "lng": 127.6372, "hint": null}, {"name": "동두천시", "region": "경기도", "lat": 37.9036, "lng": 127.0606, "hint": null}, {"name": "과천시", "region": "경기도", "lat": 37.4292, "lng": 126.9877, "hint": null}, {"name": "양평군", "region": "경기도", "lat": 37.4917, "lng": 127.4874, "hint": null}, {"name": "가평군", "region": "경기도", "lat": 37.8315, "lng": 127.5095, "hint": null}, {"name": "연천군", "region": "경기도", "lat": 38.0966, "lng": 127.0749, "hint": null}, {"name": "광주시", "region": "경기도", "lat": 37.4292, "lng": 127.2551, "hint": "경기"}, {"name": "춘천시", "region": "강원특별자치도", "lat": 37.8813, "lng": 127.7298, "hint": null}, {"name": "원주시", "region": "강원특별자치도", "lat": 37.3422, "lng": 127.9202, "hint": null}, {"name": "강릉시", "region": "강원특별자치도", "lat": 37.7519, "lng": 128.8761, "hint": null}, {"name": "동해시", "region": "강원특별자치도", "lat": 37.5247, "lng": 129.1143, "hint": null}, {"name": "태백시", "region": "강원특별자치도", "lat": 37.1641, "lng": 128.9856, "hint": null}, {"name": "속초시", "region": "강원특별자치도", "lat": 38.207, "lng": 128.5918, "hint": null}, {"name": "삼척시", "region": "강원특별자치도", "lat": 37.45, "lng": 129.1651, "hint": null}, {"name": "홍천군", "region": "강원특별자치도", "lat": 37.6971, "lng": 127.8887, "hint": null}, {"name": "철원군", "region": "강원특별자치도", "lat": 38.1465, "lng": 127.3132, "hint": null}, {"name": "화천군", "region": "강원특별자치도", "lat": 38.1064, "lng": 127.7083, "hint": null}, {"name": "양구군", "region": "강원특별자치도", "lat": 38.1096, "lng": 127.9897, "hint": null}, {"name": "인제군", "region": "강원특별자치도", "lat": 38.0693, "lng": 128.1707, "hint": null}, {"name": "양양군", "region": "강원특별자치도", "lat": 38.0755, "lng": 128.619, "hint": null}, {"name": "평창군", "region": "강원특별자치도", "lat": 37.3706, "lng": 128.3902, "hint": null}, {"name": "정선군", "region": "강원특별자치도", "lat": 37.3806, "lng": 128.6606, "hint": null}, {"name": "영월군", "region": "강원특별자치도", "lat": 37.1834, "lng": 128.4617, "hint": null}, {"name": "횡성군", "region": "강원특별자치도", "lat": 37.4917, "lng": 127.9853, "hint": null}, {"name": "고성군", "region": "강원특별자치도", "lat": 38.3806, "lng": 128.4675, "hint": "강원"}, {"name": "청주시", "region": "충청북도", "lat": 36.6424, "lng": 127.489, "hint": null}, {"name": "충주시", "region": "충청북도", "lat": 36.991, "lng": 127.9259, "hint": null}, {"name": "제천시", "region": "충청북도", "lat": 37.1326, "lng": 128.191, "hint": null}, {"name": "보은군", "region": "충청북도", "lat": 36.4894, "lng": 127.7295, "hint": null}, {"name": "옥천군", "region": "충청북도", "lat": 36.3061, "lng": 127.5713, "hint": null}, {"name": "영동군", "region": "충청북도", "lat": 36.1751, "lng": 127.7764, "hint": null}, {"name": "증평군", "region": "충청북도", "lat": 36.7847, "lng": 127.5814, "hint": null}, {"name": "진천군", "region": "충청북도", "lat": 36.8551, "lng": 127.4353, "hint": null}, {"name": "괴산군", "region": "충청북도", "lat": 36.8154, "lng": 127.7868, "hint": null}, {"name": "음성군", "region": "충청북도", "lat": 36.9401, "lng": 127.6898, "hint": null}, {"name": "단양군", "region": "충청북도", "lat": 36.9846, "lng": 128.3654, "hint": null}, {"name": "천안시", "region": "충청남도", "lat": 36.8151, "lng": 127.1139, "hint": null}, {"name": "공주시", "region": "충청남도", "lat": 36.4465, "lng": 127.1189, "hint": null}, {"name": "보령시", "region": "충청남도", "lat": 36.3332, "lng": 126.6127, "hint": null}, {"name": "아산시", "region": "충청남도", "lat": 36.79, "lng": 127.0022, "hint": null}, {"name": "서산시", "region": "충청남도", "lat": 36.7847, "lng": 126.4503, "hint": null}, {"name": "논산시", "region": "충청남도", "lat": 36.1872, "lng": 127.0987, "hint": null}, {"name": "계룡시", "region": "충청남도", "lat": 36.2745, "lng": 127.2489, "hint": null}, {"name": "당진시", "region": "충청남도", "lat": 36.8896, "lng": 126.6297, "hint": null}, {"name": "금산군", "region": "충청남도", "lat": 36.1088, "lng": 127.488, "hint": null}, {"name": "부여군", "region": "충청남도", "lat": 36.2758, "lng": 126.9098, "hint": null}, {"name": "서천군", "region": "충청남도", "lat": 36.0803, "lng": 126.6913, "hint": null}, {"name": "청양군", "region": "충청남도", "lat": 36.4587, "lng": 126.8025, "hint": null}, {"name": "홍성군", "region": "충청남도", "lat": 36.6014, "lng": 126.6608, "hint": null}, {"name": "예산군", "region": "충청남도", "lat": 36.682, "lng": 126.8449, "hint": null}, {"name": "태안군", "region": "충청남도", "lat": 36.7454, "lng": 126.2977, "hint": null}, {"name": "전주시", "region": "전북특별자치도", "lat": 35.8242, "lng": 127.148, "hint": null}, {"name": "군산시", "region": "전북특별자치도", "lat": 35.9678, "lng": 126.7369, "hint": null}, {"name": "익산시", "region": "전북특별자치도", "lat": 35.9483, "lng": 126.9576, "hint": null}, {"name": "정읍시", "region": "전북특별자치도", "lat": 35.5699, "lng": 126.8557, "hint": null}, {"name": "남원시", "region": "전북특별자치도", "lat": 35.4164, "lng": 127.3908, "hint": null}, {"name": "김제시", "region": "전북특별자치도", "lat": 35.8036, "lng": 126.8809, "hint": null}, {"name": "완주군", "region": "전북특별자치도", "lat": 35.9046, "lng": 127.1621, "hint": null}, {"name": "진안군", "region": "전북특별자치도", "lat": 35.7917, "lng": 127.4249, "hint": null}, {"name": "무주군", "region": "전북특별자치도", "lat": 36.0068, "lng": 127.6608, "hint": null}, {"name": "장수군", "region": "전북특별자치도", "lat": 35.6473, "lng": 127.5212, "hint": null}, {"name": "임실군", "region": "전북특별자치도", "lat": 35.6178, "lng": 127.2892, "hint": null}, {"name": "순창군", "region": "전북특별자치도", "lat": 35.3742, "lng": 127.1374, "hint": null}, {"name": "고창군", "region": "전북특별자치도", "lat": 35.4356, "lng": 126.702, "hint": null}, {"name": "부안군", "region": "전북특별자치도", "lat": 35.7318, "lng": 126.7331, "hint": null}, {"name": "목포시", "region": "전라남도", "lat": 34.8118, "lng": 126.3922, "hint": null}, {"name": "여수시", "region": "전라남도", "lat": 34.7604, "lng": 127.6622, "hint": null}, {"name": "순천시", "region": "전라남도", "lat": 34.9506, "lng": 127.4872, "hint": null}, {"name": "나주시", "region": "전라남도", "lat": 35.0158, "lng": 126.7108, "hint": null}, {"name": "광양시", "region": "전라남도", "lat": 34.9407, "lng": 127.6957, "hint": null}, {"name": "담양군", "region": "전라남도", "lat": 35.3212, "lng": 126.988, "hint": null}, {"name": "곡성군", "region": "전라남도", "lat": 35.2822, "lng": 127.2921, "hint": null}, {"name": "구례군", "region": "전라남도", "lat": 35.2024, "lng": 127.4626, "hint": null}, {"name": "고흥군", "region": "전라남도", "lat": 34.6112, "lng": 127.2846, "hint": null}, {"name": "보성군", "region": "전라남도", "lat": 34.7714, "lng": 127.0798, "hint": null}, {"name": "화순군", "region": "전라남도", "lat": 35.0645, "lng": 126.9862, "hint": null}, {"name": "장흥군", "region": "전라남도", "lat": 34.6814, "lng": 126.907, "hint": null}, {"name": "강진군", "region": "전라남도", "lat": 34.6418, "lng": 126.7674, "hint": null}, {"name": "해남군", "region": "전라남도", "lat": 34.5734, "lng": 126.599, "hint": null}, {"name": "영암군", "region": "전라남도", "lat": 34.8003, "lng": 126.6968, "hint": null}, {"name": "무안군", "region": "전라남도", "lat": 34.9903, "lng": 126.4816, "hint": null}, {"name": "함평군", "region": "전라남도", "lat": 35.0658, "lng": 126.5165, "hint": null}, {"name": "영광군", "region": "전라남도", "lat": 35.2772, "lng": 126.5121, "hint": null}, {"name": "장성군", "region": "전라남도", "lat": 35.3018, "lng": 126.7847, "hint": null}, {"name": "완도군", "region": "전라남도", "lat": 34.3111, "lng": 126.7551, "hint": null}, {"name": "진도군", "region": "전라남도", "lat": 34.4867, "lng": 126.2633, "hint": null}, {"name": "신안군", "region": "전라남도", "lat": 34.8281, "lng": 126.1067, "hint": null}, {"name": "포항시", "region": "경상북도", "lat": 36.019, "lng": 129.3435, "hint": null}, {"name": "경주시", "region": "경상북도", "lat": 35.8562, "lng": 129.2247, "hint": null}, {"name": "김천시", "region": "경상북도", "lat": 36.1398, "lng": 128.1136, "hint": null}, {"name": "안동시", "region": "경상북도", "lat": 36.5684, "lng": 128.7294, "hint": null}, {"name": "구미시", "region": "경상북도", "lat": 36.1195, "lng": 128.3446, "hint": null}, {"name": "영주시", "region": "경상북도", "lat": 36.8055, "lng": 128.6238, "hint": null}, {"name": "영천시", "region": "경상북도", "lat": 35.9733, "lng": 128.9386, "hint": null}, {"name": "상주시", "region": "경상북도", "lat": 36.4109, "lng": 128.1592, "hint": null}, {"name": "문경시", "region": "경상북도", "lat": 36.5866, "lng": 128.1868, "hint": null}, {"name": "경산시", "region": "경상북도", "lat": 35.8251, "lng": 128.7412, "hint": null}, {"name": "군위군", "region": "경상북도", "lat": 36.2429, "lng": 128.5723, "hint": null}, {"name": "의성군", "region": "경상북도", "lat": 36.3527, "lng": 128.697, "hint": null}, {"name": "청송군", "region": "경상북도", "lat": 36.4358, "lng": 129.0572, "hint": null}, {"name": "영양군", "region": "경상북도", "lat": 36.6667, "lng": 129.1122, "hint": null}, {"name": "영덕군", "region": "경상북도", "lat": 36.4152, "lng": 129.366, "hint": null}, {"name": "청도군", "region": "경상북도", "lat": 35.6474, "lng": 128.734, "hint": null}, {"name": "고령군", "region": "경상북도", "lat": 35.7261, "lng": 128.2629, "hint": null}, {"name": "성주군", "region": "경상북도", "lat": 35.9192, "lng": 128.2828, "hint": null}, {"name": "칠곡군", "region": "경상북도", "lat": 35.9955, "lng": 128.4016, "hint": null}, {"name": "예천군", "region": "경상북도", "lat": 36.6577, "lng": 128.4527, "hint": null}, {"name": "봉화군", "region": "경상북도", "lat": 36.8931, "lng": 128.7326, "hint": null}, {"name": "울진군", "region": "경상북도", "lat": 36.993, "lng": 129.4003, "hint": null}, {"name": "울릉군", "region": "경상북도", "lat": 37.4845, "lng": 130.9057, "hint": null}, {"name": "창원시", "region": "경상남도", "lat": 35.228, "lng": 128.6811, "hint": null}, {"name": "진주시", "region": "경상남도", "lat": 35.18, "lng": 128.1076, "hint": null}, {"name": "통영시", "region": "경상남도", "lat": 34.8544, "lng": 128.4331, "hint": null}, {"name": "사천시", "region": "경상남도", "lat": 35.0038, "lng": 128.0642, "hint": null}, {"name": "김해시", "region": "경상남도", "lat": 35.2285, "lng": 128.8894, "hint": null}, {"name": "밀양시", "region": "경상남도", "lat": 35.5038, "lng": 128.7469, "hint": null}, {"name": "거제시", "region": "경상남도", "lat": 34.8806, "lng": 128.6211, "hint": null}, {"name": "양산시", "region": "경상남도", "lat": 35.335, "lng": 129.0374, "hint": null}, {"name": "의령군", "region": "경상남도", "lat": 35.3222, "lng": 128.2617, "hint": null}, {"name": "함안군", "region": "경상남도", "lat": 35.2726, "lng": 128.4062, "hint": null}, {"name": "창녕군", "region": "경상남도", "lat": 35.5445, "lng": 128.4924, "hint": null}, {"name": "남해군", "region": "경상남도", "lat": 34.8375, "lng": 127.8925, "hint": null}, {"name": "하동군", "region": "경상남도", "lat": 35.0675, "lng": 127.7514, "hint": null}, {"name": "산청군", "region": "경상남도", "lat": 35.4154, "lng": 127.8735, "hint": null}, {"name": "함양군", "region": "경상남도", "lat": 35.5203, "lng": 127.7252, "hint": null}, {"name": "거창군", "region": "경상남도", "lat": 35.6866, "lng": 127.9095, "hint": null}, {"name": "합천군", "region": "경상남도", "lat": 35.5665, "lng": 128.1657, "hint": null}, {"name": "고성군", "region": "경상남도", "lat": 34.9732, "lng": 128.3224, "hint": "경남"}, {"name": "제주시", "region": "제주특별자치도", "lat": 33.4996, "lng": 126.5312, "hint": null}, {"name": "서귀포시", "region": "제주특별자치도", "lat": 33.253, "lng": 126.5599, "hint": null}];
+const KOREA_REGIONS = [{"name": "경기도", "lat": 37.4, "lng": 127.5}, {"name": "강원특별자치도", "lat": 37.8, "lng": 128.2}, {"name": "충청북도", "lat": 36.8, "lng": 127.7}, {"name": "충청남도", "lat": 36.5, "lng": 126.8}, {"name": "전북특별자치도", "lat": 35.7, "lng": 127.1}, {"name": "전라남도", "lat": 34.8, "lng": 126.9}, {"name": "경상북도", "lat": 36.4, "lng": 128.9}, {"name": "경상남도", "lat": 35.4, "lng": 128.2}, {"name": "제주특별자치도", "lat": 33.4, "lng": 126.5}];
+
+
 const SEED_PRODUCTS = [{"category": "주차관제", "name": "주차주제어장치 / 차량번호관리컴퓨터", "model": "G-PST100A", "masPrice": 2960000, "samplePrice": ""}, {"category": "주차관제", "name": "주차요금계산기 / 사전정산기/카드전용/BF인증", "model": "GIT-PC25-BF", "masPrice": 6400000, "samplePrice": ""}, {"category": "주차관제", "name": "주차요금계산기 / 출구정산기/카드전용/BF인증", "model": "GIT-PC25-BC", "masPrice": 6160000, "samplePrice": ""}, {"category": "주차관제", "name": "차량인식기 / 차량번호인식(LPR)/단방향/전광판일체형", "model": "GIT-PL25-OI", "masPrice": 3280000, "samplePrice": ""}, {"category": "주차관제", "name": "차량인식기 / 보조차량인식기", "model": "GIT-PL25-BI", "masPrice": 1600000, "samplePrice": ""}, {"category": "주차관제", "name": "차량차단기 / 통합차단기(차단기+LPR)", "model": "GIT-PB25-IJ", "masPrice": 3400000, "samplePrice": ""}, {"category": "주차관제", "name": "차량차단기 / 단독차단기", "model": "GIT-PB25D-IJ", "masPrice": 976000, "samplePrice": ""}, {"category": "주차관제", "name": "주차안내판 / 입구만차등(1단)", "model": "GIT-PIN100", "masPrice": 812500, "samplePrice": ""}, {"category": "주차관제", "name": "주차안내판 / 입구만차등(4단)", "model": "GIT-PI026-IM4", "masPrice": 1925000, "samplePrice": ""}, {"category": "주차관제", "name": "주차안내판 / 입구만차등(8단)", "model": "GIT-PI026-IM8", "masPrice": 2379688, "samplePrice": ""}, {"category": "비상벨", "name": "비상벨서버(리눅스) / GIT-STR06L", "model": "GIT-STR06L", "masPrice": 1801250, "samplePrice": ""}, {"category": "비상벨", "name": "비상벨서버(100ch) / GM-SSUYC20I", "model": "GM-SSUYC20I", "masPrice": 775000, "samplePrice": ""}, {"category": "비상벨", "name": "방송수신기(실외) / GIT-CB06-GW", "model": "GIT-CB06-GW", "masPrice": 487150, "samplePrice": ""}, {"category": "비상벨", "name": "ip전화기 / LIP-1010i", "model": "LIP-1010i", "masPrice": 151250, "samplePrice": ""}, {"category": "비상벨", "name": "IP전화기(화상) / IPECS-1080i", "model": "IPECS-1080i", "masPrice": 762300, "samplePrice": ""}, {"category": "비상벨", "name": "무선(화장실) / GIT-CA25-MB", "model": "GIT-CA25-MB", "masPrice": 137000, "samplePrice": ""}, {"category": "비상벨", "name": "실내형(중계) / GIT-CA25-BS", "model": "GIT-CA25-BS", "masPrice": 474000, "samplePrice": ""}, {"category": "비상벨", "name": "실내형(주차,중계X) / GIT-CA25B-BS", "model": "GIT-CA25B-BS", "masPrice": 402000, "samplePrice": ""}, {"category": "비상벨", "name": "실외형(AI, 게이트웨이) / GIT-CA25-BP", "model": "GIT-CA25-BP", "masPrice": 653000, "samplePrice": ""}, {"category": "비상벨", "name": "실외형(버튼,게이트웨이) / GIT-CA25B-BP", "model": "GIT-CA25B-BP", "masPrice": 507000, "samplePrice": ""}, {"category": "출입통제", "name": "단말기(EST) / 카드리더기", "model": "ABR128P", "masPrice": 156750, "samplePrice": ""}, {"category": "출입통제", "name": "ACU(EST) / 4Ch", "model": "BCS-TC4", "masPrice": 579700, "samplePrice": ""}, {"category": "출입통제", "name": "ACU(EST) / 8Ch", "model": "BCS-TC8", "masPrice": 1166000, "samplePrice": ""}, {"category": "출입통제", "name": "단말기(성현) / 카드리더기", "model": "", "masPrice": "", "samplePrice": ""}, {"category": "출입통제", "name": "ACU(성현) / 2CH", "model": "", "masPrice": "", "samplePrice": ""}, {"category": "출입통제", "name": "ACU(성현) / 4CH", "model": "", "masPrice": "", "samplePrice": ""}, {"category": "출입통제", "name": "출입통제서버 / GIT-STR06L", "model": "", "masPrice": 1240250, "samplePrice": ""}, {"category": "출입통제", "name": "카드 등록기 / GIT-AG200", "model": "", "masPrice": 206250, "samplePrice": ""}, {"category": "출입통제", "name": "지문+카드리더기 / GM-AFG128B", "model": "", "masPrice": 460625, "samplePrice": ""}, {"category": "출입통제", "name": "얼굴인식기 / GIT-AFI100B", "model": "", "masPrice": 1306250, "samplePrice": ""}, {"category": "출입통제", "name": "얼굴+지문인식기 / GIT-AFI200", "model": "", "masPrice": 742500, "samplePrice": ""}, {"category": "출입통제", "name": "카드리더기 / GIT-ARC101W", "model": "", "masPrice": 96250, "samplePrice": ""}, {"category": "출입통제", "name": "스트라이커 / GIT-GS500", "model": "", "masPrice": 66000, "samplePrice": ""}, {"category": "출입통제", "name": "스트라이커 / GIT-GS1000", "model": "", "masPrice": 220000, "samplePrice": ""}, {"category": "출입통제", "name": "스트라이커 / GIT-GS3000", "model": "", "masPrice": 171875, "samplePrice": ""}, {"category": "출입통제", "name": "데드볼트 / GIT-GD1000", "model": "", "masPrice": 61875, "samplePrice": ""}, {"category": "출입통제", "name": "E/M Lock / GIT-GE1000", "model": "", "masPrice": 61875, "samplePrice": ""}, {"category": "출입통제", "name": "E/M Lock / GIT-GE5000", "model": "", "masPrice": 137500, "samplePrice": ""}, {"category": "출입통제", "name": "도어루프(매립형) / GIT-DH100RC", "model": "", "masPrice": 15125, "samplePrice": ""}, {"category": "출입통제", "name": "도어루프(노출형) / GIT-DH100EP", "model": "", "masPrice": 13750, "samplePrice": ""}, {"category": "출입통제", "name": "퇴실버튼 / GIT-GB10", "model": "", "masPrice": 8250, "samplePrice": ""}, {"category": "출입통제", "name": "퇴실버튼 / G-GB50", "model": "", "masPrice": 11000, "samplePrice": ""}, {"category": "출입통제", "name": "퇴실버튼 / G-GB500", "model": "", "masPrice": 13750, "samplePrice": ""}, {"category": "출입통제", "name": "컨트롤러 / GIT-AIO", "model": "", "masPrice": 61875, "samplePrice": ""}, {"category": "출입통제", "name": "컴퓨터서버 / GIT-WSPC-NR1", "model": "", "masPrice": 1996500, "samplePrice": ""}, {"category": "출입통제", "name": "모바일카드리더기 / GIT-ABR128A", "model": "", "masPrice": 134750, "samplePrice": ""}, {"category": "출입통제", "name": "네트워크스위치 / GIT-CH08P", "model": "", "masPrice": 246125, "samplePrice": ""}, {"category": "출입통제", "name": "액정모니터 / GIT-CM215HAR", "model": "", "masPrice": 233750, "samplePrice": ""}, {"category": "출입통제", "name": "브래킷 / GIT-GEB1000", "model": "", "masPrice": 27500, "samplePrice": ""}];
 
 const GIT_STAFF = [{"name": "유기수 본부장", "phone": "010-8870-4686", "email": "yuksu3@greenitkr.com"}, {"name": "송태엽 팀장", "phone": "010-3000-2511", "email": "tysong@greenitkr.com"}, {"name": "임주경 팀장", "phone": "010-4532-6383", "email": "ljk@greenitkr.com"}, {"name": "엄상조 차장", "phone": "010-2110-5000", "email": "sangjoeom@greenitkr.com"}, {"name": "전호섭 팀장", "phone": "010-3537-6670", "email": "hsjeon@greenitkr.com"}, {"name": "배동현 팀장", "phone": "010-8588-9758", "email": "dhbae@greenitkr.com"}, {"name": "박종민 본부장", "phone": "010-2010-9233", "email": "JMINP0610@greenitkr.com"}, {"name": "남종우 팀장", "phone": "010-2419-6780", "email": "jwman@greenitkr.com"}];
@@ -474,7 +497,8 @@ let STATE = { companies: [], view: "dashboard", filterLevel:"", filterStage:"", 
   reportMode:"week", reportWeekKey:"", reportMonthKey:"",
   assigneeViewSelected:"", assigneeViewCompanyQuery:"", assigneeExpanded:{},
   productInfo:{ "영상감시":[], "주차관제":[], "출입통제":[], "비상벨":[] }, productViewCategory:"주차관제", productViewCompanyId:"",
-  quotes:[], quoteForm:null, quoteSearchQuery:"" };
+  quotes:[], quoteForm:null, quoteSearchQuery:"",
+  mapAssigneeFilter:"", mapCategoryFilter:"" };
 
 function freshIntakeForm(){
   return {
@@ -882,6 +906,9 @@ function renderSidebar(){
   const productNav = el("div", {class:"nav-item"+(STATE.view==="productInfo"?" active":""), onclick:()=>{STATE.view="productInfo"; render();}}, "🏷️ 업체별 제품정보");
   sb.appendChild(productNav);
 
+  const mapNav = el("div", {class:"nav-item"+(STATE.view==="koreaMap"?" active":""), onclick:()=>{STATE.view="koreaMap"; render();}}, "🗺️ 전국지도");
+  sb.appendChild(mapNav);
+
   const specBtns = el("div",{class:"spec-nav"},
     el("div",{class:"spec-nav-item", onclick:()=>openSpecReport("parking")}, "🅿️ 주차관제 구성"),
     el("div",{class:"spec-nav-item", onclick:()=>openSpecReport("access")}, "🚪 출입통제 구성"),
@@ -990,6 +1017,8 @@ function renderMain(){
     main.appendChild(renderQuoteBuilder());
   } else if(STATE.view === "productInfo"){
     main.appendChild(renderProductInfo());
+  } else if(STATE.view === "koreaMap"){
+    main.appendChild(renderKoreaMap());
   } else {
     main.appendChild(renderCategoryView(STATE.view));
   }
@@ -2777,6 +2806,181 @@ function exportQuoteExcel(f){
   showToast("다운로드했어요");
 }
 
+
+/* ===================== 전국지도 ===================== */
+let _koreaMapInstance = null;
+let _koreaMapMarkersLayer = null;
+
+// 주소 문자열에서 시/군/구를 찾아 좌표를 반환한다. 못 찾으면 시/도 단위로, 그것도 없으면 null.
+function findLocationForAddress(address){
+  if(!address) return null;
+  const addr = String(address).replace(/\s+/g,"");
+  if(!addr) return null;
+  // 동명이지(고성군, 경기 광주시 등)는 region 힌트가 주소에 포함될 때만 우선 매칭
+  for(const c of KOREA_CITIES){
+    if(c.hint && addr.includes(c.hint) && addr.includes(c.name)) return c;
+  }
+  for(const c of KOREA_CITIES){
+    if(!c.hint && addr.includes(c.name)) return c;
+  }
+  for(const r of KOREA_REGIONS){
+    if(addr.includes(r.name.replace(/특별자치도|특별자치시|도$/,""))) return r;
+  }
+  return null;
+}
+
+function groupCompaniesByLocation(companies){
+  const map = {};
+  const unresolved = [];
+  companies.forEach(c=>{
+    const loc = findLocationForAddress(c.address);
+    if(!loc){ unresolved.push(c); return; }
+    if(!map[loc.name]) map[loc.name] = { loc, companies: [] };
+    map[loc.name].companies.push(c);
+  });
+  return { groups: Object.values(map), unresolved };
+}
+
+function markerColorForCount(n){
+  if(n>=15) return "#DC2626";
+  if(n>=8) return "#D97706";
+  if(n>=3) return "#0F766E";
+  return "#2563EB";
+}
+
+function renderKoreaMap(){
+  const wrap = el("div");
+  wrap.appendChild(el("div",{class:"topbar"},
+    el("div",null, el("h1",null,"전국지도"), el("div",{class:"sub"},"업체 주소를 기준으로 지역별 분포를 지도에서 확인하세요"))
+  ));
+
+  // 검색조건
+  const filterRow = el("div",{class:"search-row"});
+  const assigneeSelect = el("select",null);
+  assigneeSelect.appendChild(el("option",{value:""},"전체 영업자"));
+  distinctAssignees().forEach(name=>{
+    const opt = el("option",{value:name}, name);
+    if(STATE.mapAssigneeFilter===name) opt.setAttribute("selected","selected");
+    assigneeSelect.appendChild(opt);
+  });
+  assigneeSelect.addEventListener("change",(e)=>{ STATE.mapAssigneeFilter=e.target.value; updateKoreaMapMarkers(panel, unresolvedHolder); });
+  filterRow.appendChild(el("div",{class:"search-field"}, el("label",null,"영업자별 검색"), assigneeSelect));
+
+  const catSelect = el("select",null);
+  catSelect.appendChild(el("option",{value:""},"전체 공종"));
+  CATEGORIES.forEach(cat=>{
+    const opt = el("option",{value:cat}, cat);
+    if(STATE.mapCategoryFilter===cat) opt.setAttribute("selected","selected");
+    catSelect.appendChild(opt);
+  });
+  catSelect.addEventListener("change",(e)=>{ STATE.mapCategoryFilter=e.target.value; updateKoreaMapMarkers(panel, unresolvedHolder); });
+  filterRow.appendChild(el("div",{class:"search-field"}, el("label",null,"공종별 검색"), catSelect));
+  wrap.appendChild(filterRow);
+
+  wrap.appendChild(el("div",{class:"map-legend"},
+    el("span",null,"● 업체 수: "),
+    el("span",{class:"map-legend-dot", style:"background:#2563EB;"}), el("span",null,"1~2개  "),
+    el("span",{class:"map-legend-dot", style:"background:#0F766E;"}), el("span",null,"3~7개  "),
+    el("span",{class:"map-legend-dot", style:"background:#D97706;"}), el("span",null,"8~14개  "),
+    el("span",{class:"map-legend-dot", style:"background:#DC2626;"}), el("span",null,"15개 이상"),
+  ));
+
+  const mapLayout = el("div",{class:"map-layout"});
+  const mapContainer = el("div",{id:"korea-map-container", class:"map-container"});
+  const panel = el("div",{id:"map-side-panel", class:"map-side-panel"});
+  mapLayout.appendChild(mapContainer);
+  mapLayout.appendChild(panel);
+  wrap.appendChild(mapLayout);
+
+  const unresolvedHolder = el("div",{id:"map-unresolved"});
+  wrap.appendChild(unresolvedHolder);
+
+  // Leaflet은 컨테이너가 실제 DOM에 붙은 뒤에 초기화해야 하므로 다음 틱에 실행한다.
+  setTimeout(()=> initKoreaMap(panel, unresolvedHolder), 0);
+
+  return wrap;
+}
+
+function initKoreaMap(panel, unresolvedHolder){
+  const containerEl = document.getElementById("korea-map-container");
+  if(!containerEl || typeof L === "undefined") return;
+
+  if(_koreaMapInstance){
+    try{ _koreaMapInstance.remove(); }catch(e){}
+    _koreaMapInstance = null;
+  }
+
+  const map = L.map("korea-map-container", { zoomControl:true }).setView([36.2, 127.9], 7);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 18, attribution: "&copy; OpenStreetMap contributors"
+  }).addTo(map);
+  _koreaMapInstance = map;
+  _koreaMapMarkersLayer = L.layerGroup().addTo(map);
+
+  updateKoreaMapMarkers(panel, unresolvedHolder);
+}
+
+function updateKoreaMapMarkers(panel, unresolvedHolder){
+  if(!_koreaMapInstance || !_koreaMapMarkersLayer) return;
+  _koreaMapMarkersLayer.clearLayers();
+
+  let companies = STATE.companies;
+  if(STATE.mapAssigneeFilter) companies = companies.filter(c=>c.assignee===STATE.mapAssigneeFilter);
+  if(STATE.mapCategoryFilter) companies = companies.filter(c=>c.category===STATE.mapCategoryFilter);
+
+  const { groups, unresolved } = groupCompaniesByLocation(companies);
+
+  groups.forEach(g=>{
+    const count = g.companies.length;
+    const color = markerColorForCount(count);
+    const byLevel = {A:0,B:0,C:0};
+    g.companies.forEach(c=>byLevel[c.level]++);
+    const icon = L.divIcon({
+      className: "korea-map-marker",
+      html: '<div class="map-marker-badge" style="background:'+color+';">'+count+'</div>',
+      iconSize: [32,32], iconAnchor: [16,16]
+    });
+    const marker = L.marker([g.loc.lat, g.loc.lng], { icon }).addTo(_koreaMapMarkersLayer);
+    marker.bindTooltip(g.loc.name+" · "+count+"개 (A"+byLevel.A+" B"+byLevel.B+" C"+byLevel.C+")");
+    marker.on("click", ()=> renderMapCityPanel(panel, g));
+  });
+
+  panel.innerHTML = "";
+  panel.appendChild(el("div",{class:"map-panel-hint"}, "지도의 원(마커)을 클릭하면 그 지역 업체 목록이 여기에 표시돼요."));
+  panel.appendChild(el("div",{style:"font-size:11.5px;color:var(--ink-soft);margin-top:8px;"}, "지도에 표시된 지역: "+groups.length+"곳 · 업체: "+companies.filter(c=>findLocationForAddress(c.address)).length+"개"));
+
+  unresolvedHolder.innerHTML = "";
+  if(unresolved.length>0){
+    unresolvedHolder.appendChild(el("div",{class:"section-title", style:"margin-top:18px;"}, "주소로 위치를 확인할 수 없는 업체 ("+unresolved.length+"개)"));
+    unresolvedHolder.appendChild(buildMapCompanyTable(unresolved));
+  }
+}
+
+function renderMapCityPanel(panel, group){
+  panel.innerHTML = "";
+  const byLevel = {A:0,B:0,C:0};
+  group.companies.forEach(c=>byLevel[c.level]++);
+  panel.appendChild(el("div",{class:"map-panel-title"}, group.loc.name+" ("+group.companies.length+"개 업체)"));
+  panel.appendChild(el("div",{style:"font-size:11.5px;color:var(--ink-soft);margin-bottom:10px;"},
+    "A "+byLevel.A+" · B "+byLevel.B+" · C "+byLevel.C
+  ));
+  panel.appendChild(buildMapCompanyTable(group.companies));
+}
+
+function buildMapCompanyTable(companies){
+  const table = el("table",{class:"pipeline-table"});
+  table.appendChild(el("tr",null, el("th",null,"업체명"), el("th",null,"공종"), el("th",null,"레벨"), el("th",null,"대표자"), el("th",null,"주소")));
+  companies.forEach(c=>{
+    table.appendChild(el("tr",{onclick:()=>{ STATE.modalId=c.id; render(); }},
+      el("td",{class:"company-name-cell"}, c.name),
+      el("td",null, c.category),
+      el("td",null, el("span",{class:"level-tag "+(c.dropped?"DROP":c.level)}, c.dropped?"DROP":c.level)),
+      el("td",null, c.ceoName||"-"),
+      el("td",null, c.address||"-")
+    ));
+  });
+  return table;
+}
 
 /* ===================== 모달 (상세/추가) ===================== */
 function renderModal(){
