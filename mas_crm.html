@@ -131,6 +131,8 @@
   table.pipeline-table th.stage-th{cursor:pointer; user-select:none;}
   table.pipeline-table th.stage-th:hover{background:var(--teal-soft); color:var(--teal);}
   .stage-filter-head{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .load-warning-banner{background:var(--c-bg); border-bottom:2px solid var(--c-color); color:var(--c-color); padding:12px 20px; display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; font-size:13px;}
+  .load-warning-banner b{color:var(--c-color);}
   .col-settings-panel{display:flex; flex-wrap:wrap; gap:10px 16px; background:#fff; border:1px solid var(--line); border-radius:8px; padding:10px 14px; margin:8px 0 10px;}
   .col-settings-item{display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--ink); cursor:pointer;}
   .col-settings-item input{width:15px; height:15px; accent-color:var(--teal);}
@@ -399,6 +401,7 @@
 </style>
 </head>
 <body>
+<div id="load-warning-banner-container"></div>
 <div id="app"></div>
 <div class="toast" id="toast"></div>
 
@@ -530,21 +533,29 @@ function freshIntakeForm(){
 
 function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
 
+let dataLoadedSuccessfully = false; // 불러오기가 확실히 성공했을 때만 true. false인 동안은 저장을 막아 데이터 유실을 방지한다.
+
 async function loadData(){
   try{
     const res = await fetch(SHEETS_URL, { method: "GET" });
     const data = await res.json();
     if(data && data.ok && Array.isArray(data.companies) && data.companies.length > 0){
       STATE.companies = data.companies.map(c=>Object.assign({businessCard:"", checklist:[], managerEmail:"", intake:null, attachments:[], productNames:{}}, c));
+      dataLoadedSuccessfully = true;
+    } else if(data && data.ok && Array.isArray(data.companies) && data.companies.length === 0){
+      // 시트가 실제로 비어있을 수도, 일시적인 오류로 비어보일 수도 있다.
+      // 절대 자동으로 초기데이터를 덮어쓰지 않는다 — 잘못하면 실제 데이터를 지울 수 있기 때문.
+      STATE.companies = [];
+      dataLoadedSuccessfully = false;
+      showToast("구글시트에 업체 데이터가 없는 것으로 확인됐어요. 실수로 비어 보이는 것일 수 있으니, 시트에서 직접 확인 후 진행해 주세요. 확인 전까지는 저장이 보류됩니다.");
     } else {
-      // 시트가 비어있으면 초기 데이터로 채워서 그대로 시트에 저장해둔다.
-      STATE.companies = buildSeed();
-      await saveData();
+      throw new Error("invalid response");
     }
   }catch(e){
     console.error("불러오기 실패", e);
-    STATE.companies = buildSeed();
-    showToast("구글시트에서 데이터를 불러오지 못했어요. 네트워크 상태를 확인하거나 잠시 후 새로고침해 주세요.");
+    STATE.companies = [];
+    dataLoadedSuccessfully = false;
+    showToast("구글시트에서 데이터를 불러오지 못했어요. 새로고침해서 다시 시도해 주세요. 확인 전까지는 저장이 보류됩니다.");
   }
   render();
 }
@@ -590,6 +601,12 @@ async function loadQuotes(){
 let _saveInFlight = false;
 let _saveQueued = false;
 async function saveData(){
+  if(!dataLoadedSuccessfully){
+    console.warn("데이터를 정상적으로 불러오지 못한 상태라 저장을 건너뜁니다.");
+    setSaveStatus("error");
+    showToast("데이터를 아직 정상적으로 불러오지 못해 저장이 보류됐어요. 새로고침 후 다시 시도해 주세요.");
+    return;
+  }
   _saveQueued = true;
   if(_saveInFlight) return;
   _saveInFlight = true;
@@ -878,11 +895,36 @@ window.addEventListener("appinstalled", ()=>{
 function render(){
   const app = document.getElementById("app");
   app.innerHTML = "";
+  const bannerContainer = document.getElementById("load-warning-banner-container");
+  bannerContainer.innerHTML = "";
+  if(!dataLoadedSuccessfully){
+    bannerContainer.appendChild(buildLoadWarningBanner());
+  }
   app.appendChild(renderSidebar());
   app.appendChild(renderMain());
   if(STATE.modalId || STATE.addingNew){
     app.appendChild(renderModal());
   }
+}
+
+function buildLoadWarningBanner(){
+  const banner = el("div",{class:"load-warning-banner"},
+    el("div",null,
+      el("b",null,"⚠ 데이터를 정상적으로 불러오지 못했어요."),
+      " 실제 구글시트 내용과 다를 수 있어 저장이 잠시 막혀 있어요. 아래에서 다시 불러오거나 시트를 직접 확인해 주세요."
+    ),
+    el("div",{style:"display:flex;gap:8px;flex-wrap:wrap;"},
+      el("button",{class:"btn-ghost btn-sm", onclick:()=>{ loadData(); }}, "🔄 다시 불러오기"),
+      STATE.isAdmin ? el("button",{class:"btn-danger btn-sm", onclick:()=>{
+        if(!window.confirm("정말로 구글시트가 비어있는 게 맞나요?\n초기 샘플 데이터로 새로 채우고 저장합니다. 이 작업은 신중하게 확인 후 진행해주세요.")) return;
+        STATE.companies = buildSeed();
+        dataLoadedSuccessfully = true;
+        saveData();
+        render();
+      }}, "시트가 정말 비어있다면 초기 데이터로 채우기") : null
+    )
+  );
+  return banner;
 }
 
 function renderSidebar(){
