@@ -131,6 +131,10 @@
   table.pipeline-table th.stage-th{cursor:pointer; user-select:none;}
   table.pipeline-table th.stage-th:hover{background:var(--teal-soft); color:var(--teal);}
   .stage-filter-head{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .col-settings-panel{display:flex; flex-wrap:wrap; gap:10px 16px; background:#fff; border:1px solid var(--line); border-radius:8px; padding:10px 14px; margin:8px 0 10px;}
+  .col-settings-item{display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--ink); cursor:pointer;}
+  .col-settings-item input{width:15px; height:15px; accent-color:var(--teal);}
+  .detail-list-table td.detail-list-cell{text-align:left; font-size:12px; line-height:1.5;}
 
   .level-tag{display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:20px; font-weight:800; font-size:11.5px;}
   .level-tag.A{background:var(--a-bg); color:var(--a-color);}
@@ -406,6 +410,7 @@ const STAGES = [
   {id:"direct",  label:"직생진행중"},
   {id:"catalog", label:"목록화진행중"},
   {id:"price",   label:"가격협상/등록"},
+  {id:"mall",    label:"쇼핑몰 등록완료"},
 ];
 const LEVELS = ["A","B","C"];
 const PRODUCT_CATEGORIES = ["영상감시","주차관제","출입통제","비상벨"];
@@ -498,7 +503,8 @@ let STATE = { companies: [], view: "dashboard", filterLevel:"", filterStage:"", 
   assigneeViewSelected:"", assigneeViewCompanyQuery:"", assigneeExpanded:{},
   productInfo:{ "영상감시":[], "주차관제":[], "출입통제":[], "비상벨":[] }, productViewCategory:"주차관제", productViewCompanyId:"",
   quotes:[], quoteForm:null, quoteSearchQuery:"",
-  mapAssigneeFilter:"", mapCategoryFilter:"" };
+  mapAssigneeFilter:"", mapCategoryFilter:"",
+  hiddenStageCols:{}, showColSettings:false, showDetailList:false };
 
 function freshIntakeForm(){
   return {
@@ -1083,23 +1089,50 @@ function renderDashboard(){
   refreshResults();
 
   // 전체 파이프라인 단계 요약 테이블
+  const visibleStages = STAGES.filter(s=>!STATE.hiddenStageCols[s.id]);
+  const showDropCol = !STATE.hiddenStageCols["dropped"];
+
   const table = el("table",{class:"pipeline-table"});
   table.appendChild(el("tr",null,
     el("th",null,"공종"),
-    ...STAGES.map(s=>el("th",{class:"stage-th", onclick:()=>{ STATE.stageFilter={type:"stage", id:s.id, label:s.label}; render(); }}, s.label)),
-    el("th",{class:"stage-th", onclick:()=>{ STATE.stageFilter={type:"dropped", id:"dropped", label:"DROP"}; render(); }}, "DROP")
+    ...visibleStages.map(s=>el("th",{class:"stage-th", onclick:()=>{ STATE.stageFilter={type:"stage", id:s.id, label:s.label}; render(); }}, s.label)),
+    showDropCol ? el("th",{class:"stage-th", onclick:()=>{ STATE.stageFilter={type:"dropped", id:"dropped", label:"DROP"}; render(); }}, "DROP") : null
   ));
   CATEGORIES.forEach(cat=>{
     const items = STATE.companies.filter(c=>c.category===cat);
     const row = el("tr",null, el("td",{class:"company-name-cell"}, cat));
-    STAGES.forEach(s=>{
+    visibleStages.forEach(s=>{
       const n = items.filter(c=>!c.dropped && c.stage===s.id).length;
       row.appendChild(el("td",null, n ? String(n) : "-"));
     });
-    row.appendChild(el("td",null, String(items.filter(c=>c.dropped).length) || "-"));
+    if(showDropCol) row.appendChild(el("td",null, String(items.filter(c=>c.dropped).length) || "-"));
     table.appendChild(row);
   });
-  const tblWrap = el("div",null, el("div",{class:"section-title"},"단계별 전체 현황 (제목을 클릭하면 해당 단계 업체만 볼 수 있어요)"), table);
+
+  const tblHead = el("div",{class:"stage-filter-head"},
+    el("div",{class:"section-title", style:"margin:0;flex:1;"},"단계별 전체 현황 (제목을 클릭하면 해당 단계 업체만 볼 수 있어요)"),
+    el("button",{class:"btn-ghost btn-sm", onclick:()=>{ STATE.showColSettings=!STATE.showColSettings; render(); }}, "⚙ 표시 항목"),
+    el("button",{class:"btn-ghost btn-sm", onclick:()=>{ STATE.showDetailList=!STATE.showDetailList; render(); }}, STATE.showDetailList ? "📋 상세리스트 닫기" : "📋 등록 진행 단계별 업체 상세리스트")
+  );
+  const tblWrap = el("div",null, tblHead);
+
+  if(STATE.showColSettings){
+    const panel = el("div",{class:"col-settings-panel"});
+    STAGES.forEach(s=>{
+      const cb = checkbox(!STATE.hiddenStageCols[s.id], v=>{ STATE.hiddenStageCols[s.id]=!v; render(); });
+      panel.appendChild(el("label",{class:"col-settings-item"}, cb, s.label));
+    });
+    const dropCb = checkbox(!STATE.hiddenStageCols["dropped"], v=>{ STATE.hiddenStageCols["dropped"]=!v; render(); });
+    panel.appendChild(el("label",{class:"col-settings-item"}, dropCb, "DROP"));
+    tblWrap.appendChild(panel);
+  }
+
+  tblWrap.appendChild(table);
+
+  if(STATE.showDetailList){
+    tblWrap.appendChild(buildStageDetailTable(visibleStages));
+  }
+
   wrap.appendChild(tblWrap);
 
   if(STATE.stageFilter){
@@ -1191,6 +1224,28 @@ function latestHistoryText(c){
 function truncateText(text, n){
   if(!text) return "-";
   return text.length > n ? text.slice(0, n)+"…" : text;
+}
+
+// 등록 진행 단계별 업체 상세리스트 (공종 × 단계, 셀에 업체명 나열)
+function buildStageDetailTable(visibleStages){
+  const rows = CATEGORIES.filter(c=>c!=="공통");
+  const table = el("table",{class:"pipeline-table detail-list-table", style:"margin-top:14px;"});
+  table.appendChild(el("tr",null,
+    el("th",null,"공종"),
+    ...visibleStages.map(s=>{
+      const total = rows.reduce((sum,cat)=> sum + STATE.companies.filter(c=>c.category===cat && !c.dropped && c.stage===s.id).length, 0);
+      return el("th",null, s.label+"("+total+")");
+    })
+  ));
+  rows.forEach(cat=>{
+    const tr = el("tr",null, el("td",{class:"company-name-cell"}, cat));
+    visibleStages.forEach(s=>{
+      const names = STATE.companies.filter(c=>c.category===cat && !c.dropped && c.stage===s.id).map(c=>c.name);
+      tr.appendChild(el("td",{class:"detail-list-cell"}, names.length ? names.join(", ") : "-"));
+    });
+    table.appendChild(tr);
+  });
+  return table;
 }
 
 function buildStageFilterResults(){
