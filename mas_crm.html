@@ -134,7 +134,9 @@
   .col-settings-panel{display:flex; flex-wrap:wrap; gap:10px 16px; background:#fff; border:1px solid var(--line); border-radius:8px; padding:10px 14px; margin:8px 0 10px;}
   .col-settings-item{display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--ink); cursor:pointer;}
   .col-settings-item input{width:15px; height:15px; accent-color:var(--teal);}
-  .detail-list-table td.detail-list-cell{text-align:left; font-size:12px; line-height:1.5;}
+  table.detail-list-table{table-layout:fixed; width:100%; display:table !important; overflow-x:visible !important;}
+  table.detail-list-table th, table.detail-list-table td{word-wrap:break-word; overflow-wrap:break-word; white-space:normal !important;}
+  .detail-list-table td.detail-list-cell{text-align:left; font-size:12px; line-height:1.6;}
 
   .level-tag{display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:20px; font-weight:800; font-size:11.5px;}
   .level-tag.A{background:var(--a-bg); color:var(--a-color);}
